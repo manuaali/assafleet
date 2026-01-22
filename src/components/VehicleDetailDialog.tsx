@@ -92,14 +92,16 @@ export function VehicleDetailDialog({
         updateData.contract_start_date = editedVehicle.contract_start_date || null;
         updateData.contract_end_date = editedVehicle.contract_end_date || null;
         updateData.contract_kilometers = editedVehicle.contract_kilometers || null;
+        updateData.current_kilometers = editedVehicle.current_kilometers ?? 0;
         updateData.responsible_user_id = editedVehicle.responsible_user_id || null;
         updateData.notes = editedVehicle.notes || null;
         updateData.winter_tires_location = editedVehicle.winter_tires_location || null;
         updateData.service_location_name = editedVehicle.service_location_name || null;
         updateData.service_location_phone = editedVehicle.service_location_phone || null;
       } else if (canEditResponsibleUser) {
-        // Admin can only edit responsible user
+        // Admin can edit responsible user and current kilometers
         updateData.responsible_user_id = editedVehicle.responsible_user_id || null;
+        updateData.current_kilometers = editedVehicle.current_kilometers ?? 0;
       }
 
       const { error } = await supabase
@@ -314,6 +316,24 @@ export function VehicleDetailDialog({
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="edit-current-km" className="flex items-center gap-2">
+                  <Gauge className="h-4 w-4" />
+                  Nykyiset kilometrit
+                </Label>
+                <Input
+                  id="edit-current-km"
+                  type="number"
+                  value={editedVehicle.current_kilometers ?? ""}
+                  onChange={(e) =>
+                    setEditedVehicle({ 
+                      ...editedVehicle, 
+                      current_kilometers: e.target.value ? parseInt(e.target.value) : 0 
+                    })
+                  }
+                />
+              </div>
+
               <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide pt-4">
                 Huolto ja renkaat
               </h3>
@@ -441,6 +461,27 @@ export function VehicleDetailDialog({
                 <InfoRow icon={Snowflake} label="Talvirenkaiden säilytyspaikka" value={vehicle.winter_tires_location} />
                 <InfoRow icon={Wrench} label="Huoltopaikka" value={vehicle.service_location_name} />
                 <InfoRow icon={Phone} label="Huoltopaikan puhelin" value={vehicle.service_location_phone} isPhone />
+              </div>
+
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide pt-4">
+                Kilometrit
+              </h3>
+              <div className="space-y-2">
+                <Label htmlFor="admin-edit-km" className="flex items-center gap-2">
+                  <Gauge className="h-4 w-4" />
+                  Nykyiset kilometrit
+                </Label>
+                <Input
+                  id="admin-edit-km"
+                  type="number"
+                  value={editedVehicle.current_kilometers ?? ""}
+                  onChange={(e) =>
+                    setEditedVehicle({ 
+                      ...editedVehicle, 
+                      current_kilometers: e.target.value ? parseInt(e.target.value) : 0 
+                    })
+                  }
+                />
               </div>
 
               <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide pt-4">
