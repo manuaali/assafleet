@@ -302,7 +302,7 @@ export default function MyVehicle() {
                   <div className="flex items-start gap-3">
                     <Snowflake className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm text-muted-foreground">Talvirenkaiden säilytyspaikka</p>
+                      <p className="text-sm text-muted-foreground">Renkaiden säilytyspaikka</p>
                       <p className="font-medium">{vehicle.winter_tires_location}</p>
                     </div>
                   </div>

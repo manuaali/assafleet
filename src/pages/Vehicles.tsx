@@ -56,6 +56,8 @@ interface Vehicle {
   contract_end_date: string | null;
   contract_kilometers: number | null;
   current_kilometers: number | null;
+  monthly_leasing_cost: number | null;
+  vin: string | null;
   responsible_user_id: string | null;
   notes: string | null;
   winter_tires_location: string | null;
@@ -90,6 +92,8 @@ export default function Vehicles() {
     contract_start_date: "",
     contract_end_date: "",
     contract_kilometers: "",
+    monthly_leasing_cost: "",
+    vin: "",
     responsible_user_id: "",
     notes: "",
     winter_tires_location: "",
@@ -152,6 +156,10 @@ export default function Vehicles() {
         contract_kilometers: newVehicle.contract_kilometers
           ? parseInt(newVehicle.contract_kilometers)
           : null,
+        monthly_leasing_cost: newVehicle.monthly_leasing_cost
+          ? parseFloat(newVehicle.monthly_leasing_cost)
+          : null,
+        vin: newVehicle.vin || null,
         responsible_user_id: newVehicle.responsible_user_id || null,
         notes: newVehicle.notes || null,
         winter_tires_location: newVehicle.winter_tires_location || null,
@@ -177,6 +185,8 @@ export default function Vehicles() {
         contract_start_date: "",
         contract_end_date: "",
         contract_kilometers: "",
+        monthly_leasing_cost: "",
+        vin: "",
         winter_tires_location: "",
         service_location_name: "",
         service_location_phone: "",
@@ -356,7 +366,7 @@ export default function Vehicles() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="contract_start">Sopimus alkaa</Label>
                     <Input
@@ -385,6 +395,9 @@ export default function Vehicles() {
                       }
                     />
                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="contract_km">Sopimuskilometrit</Label>
                     <Input
@@ -400,6 +413,37 @@ export default function Vehicles() {
                       }
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="monthly_leasing_cost">Leasing kulut (kuukaudessa)</Label>
+                    <Input
+                      id="monthly_leasing_cost"
+                      type="number"
+                      step="0.01"
+                      placeholder="esim. 450.00"
+                      value={newVehicle.monthly_leasing_cost}
+                      onChange={(e) =>
+                        setNewVehicle({
+                          ...newVehicle,
+                          monthly_leasing_cost: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="vin">VIN-runkonumero</Label>
+                  <Input
+                    id="vin"
+                    placeholder="esim. WVWZZZ3CZWE123456"
+                    value={newVehicle.vin}
+                    onChange={(e) =>
+                      setNewVehicle({
+                        ...newVehicle,
+                        vin: e.target.value.toUpperCase(),
+                      })
+                    }
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -424,7 +468,7 @@ export default function Vehicles() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="winter_tires">Talvirenkaiden säilytyspaikka</Label>
+                  <Label htmlFor="winter_tires">Renkaiden säilytyspaikka</Label>
                   <Input
                     id="winter_tires"
                     placeholder="esim. Rengasliike Oy, Teollisuuskatu 5"

@@ -42,6 +42,8 @@ export interface Vehicle {
   contract_end_date: string | null;
   contract_kilometers: number | null;
   current_kilometers: number | null;
+  monthly_leasing_cost: number | null;
+  vin: string | null;
   responsible_user_id: string | null;
   notes: string | null;
   winter_tires_location: string | null;

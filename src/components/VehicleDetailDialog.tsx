@@ -21,7 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Phone, Wrench, Snowflake, Car, Calendar, Gauge, User, Building2 } from "lucide-react";
+import { Phone, Wrench, Snowflake, Car, Calendar, Gauge, User, Building2, FileText, Hash, Euro } from "lucide-react";
 import {
   Vehicle,
   VehicleStatus,
@@ -40,6 +40,13 @@ interface VehicleDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   onVehicleUpdated: () => void;
 }
+
+// Format date to dd.mm.yyyy
+const formatDate = (dateString: string | null): string => {
+  if (!dateString) return "-";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("fi-FI");
+};
 
 export function VehicleDetailDialog({
   vehicle,
@@ -64,6 +71,7 @@ export function VehicleDetailDialog({
 
   const canEditAll = isSuperAdmin;
   const canEditResponsibleUser = isAdmin;
+  const canViewContractDetails = isSuperAdmin || isAdmin;
 
   const getLeasingCompanyName = (id: string | null) => {
     if (!id) return "-";
@@ -92,6 +100,8 @@ export function VehicleDetailDialog({
         updateData.contract_start_date = editedVehicle.contract_start_date || null;
         updateData.contract_end_date = editedVehicle.contract_end_date || null;
         updateData.contract_kilometers = editedVehicle.contract_kilometers || null;
+        updateData.monthly_leasing_cost = editedVehicle.monthly_leasing_cost || null;
+        updateData.vin = editedVehicle.vin || null;
         updateData.current_kilometers = editedVehicle.current_kilometers ?? 0;
         updateData.responsible_user_id = editedVehicle.responsible_user_id || null;
         updateData.notes = editedVehicle.notes || null;
@@ -277,7 +287,26 @@ export function VehicleDetailDialog({
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-vin" className="flex items-center gap-2">
+                  <Hash className="h-4 w-4" />
+                  VIN-runkonumero
+                </Label>
+                <Input
+                  id="edit-vin"
+                  placeholder="esim. WVWZZZ3CZWE123456"
+                  value={editedVehicle.vin || ""}
+                  onChange={(e) =>
+                    setEditedVehicle({ ...editedVehicle, vin: e.target.value.toUpperCase() })
+                  }
+                />
+              </div>
+
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide pt-4">
+                Sopimustiedot
+              </h3>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-contract-start">Sopimus alkaa</Label>
                   <Input
@@ -300,6 +329,9 @@ export function VehicleDetailDialog({
                     }
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-contract-km">Sopimuskilometrit</Label>
                   <Input
@@ -310,6 +342,25 @@ export function VehicleDetailDialog({
                       setEditedVehicle({ 
                         ...editedVehicle, 
                         contract_kilometers: e.target.value ? parseInt(e.target.value) : null 
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-monthly-cost" className="flex items-center gap-2">
+                    <Euro className="h-4 w-4" />
+                    Leasing kulut (kuukaudessa)
+                  </Label>
+                  <Input
+                    id="edit-monthly-cost"
+                    type="number"
+                    step="0.01"
+                    placeholder="esim. 450.00"
+                    value={editedVehicle.monthly_leasing_cost || ""}
+                    onChange={(e) =>
+                      setEditedVehicle({ 
+                        ...editedVehicle, 
+                        monthly_leasing_cost: e.target.value ? parseFloat(e.target.value) : null 
                       })
                     }
                   />
@@ -341,7 +392,7 @@ export function VehicleDetailDialog({
               <div className="space-y-2">
                 <Label htmlFor="edit-winter-tires" className="flex items-center gap-2">
                   <Snowflake className="h-4 w-4" />
-                  Talvirenkaiden säilytyspaikka
+                  Renkaiden säilytyspaikka
                 </Label>
                 <Input
                   id="edit-winter-tires"
@@ -431,7 +482,7 @@ export function VehicleDetailDialog({
               </div>
             </div>
           ) : canEditResponsibleUser ? (
-            // Admin view - can only edit responsible user
+            // Admin view - can only edit responsible user and kilometers
             <div className="space-y-4">
               <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
                 Perustiedot
@@ -442,23 +493,24 @@ export function VehicleDetailDialog({
                 <InfoRow icon={Gauge} label="Käyttövoima" value={fuelTypeLabels[vehicle.fuel_type]} />
                 <InfoRow icon={Car} label="Tila" value={vehicleStatusLabels[vehicle.status]} />
                 <InfoRow icon={Building2} label="Leasingyhtiö" value={getLeasingCompanyName(vehicle.leasing_company_id)} />
-                <InfoRow icon={Gauge} label="Kilometrit" value={vehicle.current_kilometers?.toLocaleString("fi-FI")} />
+                <InfoRow icon={Hash} label="VIN-runkonumero" value={vehicle.vin} />
               </div>
 
               <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide pt-4">
                 Sopimustiedot
               </h3>
               <div className="grid grid-cols-2 gap-x-8">
-                <InfoRow icon={Calendar} label="Sopimus alkaa" value={vehicle.contract_start_date} />
-                <InfoRow icon={Calendar} label="Sopimus päättyy" value={vehicle.contract_end_date} />
+                <InfoRow icon={Calendar} label="Sopimus alkaa" value={formatDate(vehicle.contract_start_date)} />
+                <InfoRow icon={Calendar} label="Sopimus päättyy" value={formatDate(vehicle.contract_end_date)} />
                 <InfoRow icon={Gauge} label="Sopimuskilometrit" value={vehicle.contract_kilometers?.toLocaleString("fi-FI")} />
+                <InfoRow icon={Euro} label="Leasing kulut (kk)" value={vehicle.monthly_leasing_cost ? `${vehicle.monthly_leasing_cost.toLocaleString("fi-FI")} €` : null} />
               </div>
 
               <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide pt-4">
                 Huolto ja renkaat
               </h3>
               <div className="grid grid-cols-1 gap-x-8">
-                <InfoRow icon={Snowflake} label="Talvirenkaiden säilytyspaikka" value={vehicle.winter_tires_location} />
+                <InfoRow icon={Snowflake} label="Renkaiden säilytyspaikka" value={vehicle.winter_tires_location} />
                 <InfoRow icon={Wrench} label="Huoltopaikka" value={vehicle.service_location_name} />
                 <InfoRow icon={Phone} label="Huoltopaikan puhelin" value={vehicle.service_location_phone} isPhone />
               </div>
@@ -522,10 +574,40 @@ export function VehicleDetailDialog({
               )}
             </div>
           ) : (
-            // Read-only view for regular users (shouldn't happen but just in case)
+            // Read-only view for regular users - NO contract details
             <div className="space-y-4">
-              <InfoRow icon={Car} label="Merkki ja malli" value={`${vehicle.make} ${vehicle.model}`} />
-              <InfoRow icon={Car} label="Rekisterinumero" value={vehicle.license_plate} />
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                Perustiedot
+              </h3>
+              <div className="grid grid-cols-2 gap-x-8">
+                <InfoRow icon={Car} label="Merkki ja malli" value={`${vehicle.make} ${vehicle.model}`} />
+                <InfoRow icon={Car} label="Rekisterinumero" value={vehicle.license_plate} />
+                <InfoRow icon={Gauge} label="Käyttövoima" value={fuelTypeLabels[vehicle.fuel_type]} />
+                <InfoRow icon={Car} label="Tila" value={vehicleStatusLabels[vehicle.status]} />
+                <InfoRow icon={Building2} label="Leasingyhtiö" value={getLeasingCompanyName(vehicle.leasing_company_id)} />
+                <InfoRow icon={Gauge} label="Kilometrit" value={vehicle.current_kilometers?.toLocaleString("fi-FI")} />
+                <InfoRow icon={Hash} label="VIN-runkonumero" value={vehicle.vin} />
+              </div>
+
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide pt-4">
+                Huolto ja renkaat
+              </h3>
+              <div className="grid grid-cols-1 gap-x-8">
+                <InfoRow icon={Snowflake} label="Renkaiden säilytyspaikka" value={vehicle.winter_tires_location} />
+                <InfoRow icon={Wrench} label="Huoltopaikka" value={vehicle.service_location_name} />
+                <InfoRow icon={Phone} label="Huoltopaikan puhelin" value={vehicle.service_location_phone} isPhone />
+              </div>
+
+              <InfoRow icon={User} label="Vastuuhenkilö" value={getUserName(vehicle.responsible_user_id)} />
+
+              {vehicle.notes && (
+                <>
+                  <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide pt-4">
+                    Muistiinpanot
+                  </h3>
+                  <p className="text-sm">{vehicle.notes}</p>
+                </>
+              )}
             </div>
           )}
         </div>
