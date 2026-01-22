@@ -32,7 +32,9 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Search, Car, Fuel, Calendar, Gauge, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { VehicleDetailDialog } from "@/components/VehicleDetailDialog";
+import { Plus, Search, Car } from "lucide-react";
 import {
   VehicleStatus,
   FuelType,
@@ -56,6 +58,11 @@ interface Vehicle {
   current_kilometers: number | null;
   responsible_user_id: string | null;
   notes: string | null;
+  winter_tires_location: string | null;
+  service_location_name: string | null;
+  service_location_phone: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export default function Vehicles() {
@@ -66,8 +73,11 @@ export default function Vehicles() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<VehicleStatus | "all">("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { isAdmin, isSuperAdmin } = useAuth();
 
   // New vehicle form state
   const [newVehicle, setNewVehicle] = useState({
@@ -82,6 +92,9 @@ export default function Vehicles() {
     contract_kilometers: "",
     responsible_user_id: "",
     notes: "",
+    winter_tires_location: "",
+    service_location_name: "",
+    service_location_phone: "",
   });
 
   useEffect(() => {
@@ -141,6 +154,9 @@ export default function Vehicles() {
           : null,
         responsible_user_id: newVehicle.responsible_user_id || null,
         notes: newVehicle.notes || null,
+        winter_tires_location: newVehicle.winter_tires_location || null,
+        service_location_name: newVehicle.service_location_name || null,
+        service_location_phone: newVehicle.service_location_phone || null,
       });
 
       if (error) throw error;
@@ -161,6 +177,9 @@ export default function Vehicles() {
         contract_start_date: "",
         contract_end_date: "",
         contract_kilometers: "",
+        winter_tires_location: "",
+        service_location_name: "",
+        service_location_phone: "",
         responsible_user_id: "",
         notes: "",
       });
@@ -403,6 +422,53 @@ export default function Vehicles() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="winter_tires">Talvirenkaiden säilytyspaikka</Label>
+                  <Input
+                    id="winter_tires"
+                    placeholder="esim. Rengasliike Oy, Teollisuuskatu 5"
+                    value={newVehicle.winter_tires_location}
+                    onChange={(e) =>
+                      setNewVehicle({
+                        ...newVehicle,
+                        winter_tires_location: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="service_location">Huoltopaikka</Label>
+                    <Input
+                      id="service_location"
+                      placeholder="esim. Autohuolto Oy"
+                      value={newVehicle.service_location_name}
+                      onChange={(e) =>
+                        setNewVehicle({
+                          ...newVehicle,
+                          service_location_name: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="service_phone">Huoltopaikan puhelin</Label>
+                    <Input
+                      id="service_phone"
+                      type="tel"
+                      placeholder="esim. 040 123 4567"
+                      value={newVehicle.service_location_phone}
+                      onChange={(e) =>
+                        setNewVehicle({
+                          ...newVehicle,
+                          service_location_phone: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
@@ -490,7 +556,16 @@ export default function Vehicles() {
                   </TableHeader>
                   <TableBody>
                     {filteredVehicles.map((vehicle) => (
-                      <TableRow key={vehicle.id}>
+                      <TableRow 
+                        key={vehicle.id}
+                        className={(isAdmin || isSuperAdmin) ? "cursor-pointer hover:bg-muted/50" : ""}
+                        onClick={() => {
+                          if (isAdmin || isSuperAdmin) {
+                            setSelectedVehicle(vehicle);
+                            setIsDetailDialogOpen(true);
+                          }
+                        }}
+                      >
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
@@ -536,6 +611,16 @@ export default function Vehicles() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Vehicle Detail Dialog */}
+      <VehicleDetailDialog
+        vehicle={selectedVehicle}
+        leasingCompanies={leasingCompanies}
+        users={users}
+        open={isDetailDialogOpen}
+        onOpenChange={setIsDetailDialogOpen}
+        onVehicleUpdated={fetchData}
+      />
     </DashboardLayout>
   );
 }
