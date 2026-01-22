@@ -134,12 +134,14 @@ export type Database = {
           license_plate: string
           make: string
           model: string
+          monthly_leasing_cost: number | null
           notes: string | null
           responsible_user_id: string | null
           service_location_name: string | null
           service_location_phone: string | null
           status: Database["public"]["Enums"]["vehicle_status"]
           updated_at: string
+          vin: string | null
           winter_tires_location: string | null
         }
         Insert: {
@@ -154,12 +156,14 @@ export type Database = {
           license_plate: string
           make: string
           model: string
+          monthly_leasing_cost?: number | null
           notes?: string | null
           responsible_user_id?: string | null
           service_location_name?: string | null
           service_location_phone?: string | null
           status?: Database["public"]["Enums"]["vehicle_status"]
           updated_at?: string
+          vin?: string | null
           winter_tires_location?: string | null
         }
         Update: {
@@ -174,12 +178,14 @@ export type Database = {
           license_plate?: string
           make?: string
           model?: string
+          monthly_leasing_cost?: number | null
           notes?: string | null
           responsible_user_id?: string | null
           service_location_name?: string | null
           service_location_phone?: string | null
           status?: Database["public"]["Enums"]["vehicle_status"]
           updated_at?: string
+          vin?: string | null
           winter_tires_location?: string | null
         }
         Relationships: [
