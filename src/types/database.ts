@@ -44,6 +44,9 @@ export interface Vehicle {
   current_kilometers: number | null;
   responsible_user_id: string | null;
   notes: string | null;
+  winter_tires_location: string | null;
+  service_location_name: string | null;
+  service_location_phone: string | null;
   created_at: string;
   updated_at: string;
 }

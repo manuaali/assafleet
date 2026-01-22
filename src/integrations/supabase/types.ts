@@ -136,8 +136,11 @@ export type Database = {
           model: string
           notes: string | null
           responsible_user_id: string | null
+          service_location_name: string | null
+          service_location_phone: string | null
           status: Database["public"]["Enums"]["vehicle_status"]
           updated_at: string
+          winter_tires_location: string | null
         }
         Insert: {
           contract_end_date?: string | null
@@ -153,8 +156,11 @@ export type Database = {
           model: string
           notes?: string | null
           responsible_user_id?: string | null
+          service_location_name?: string | null
+          service_location_phone?: string | null
           status?: Database["public"]["Enums"]["vehicle_status"]
           updated_at?: string
+          winter_tires_location?: string | null
         }
         Update: {
           contract_end_date?: string | null
@@ -170,8 +176,11 @@ export type Database = {
           model?: string
           notes?: string | null
           responsible_user_id?: string | null
+          service_location_name?: string | null
+          service_location_phone?: string | null
           status?: Database["public"]["Enums"]["vehicle_status"]
           updated_at?: string
+          winter_tires_location?: string | null
         }
         Relationships: [
           {

@@ -19,6 +19,9 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle,
+  Snowflake,
+  Wrench,
+  Phone,
 } from "lucide-react";
 import {
   Vehicle,
@@ -283,6 +286,49 @@ export default function MyVehicle() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Service and Tires Card */}
+        {(vehicle.winter_tires_location || vehicle.service_location_name) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wrench className="h-5 w-5" />
+                Huolto ja renkaat
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6 sm:grid-cols-2">
+                {vehicle.winter_tires_location && (
+                  <div className="flex items-start gap-3">
+                    <Snowflake className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Talvirenkaiden säilytyspaikka</p>
+                      <p className="font-medium">{vehicle.winter_tires_location}</p>
+                    </div>
+                  </div>
+                )}
+                {vehicle.service_location_name && (
+                  <div className="flex items-start gap-3">
+                    <Wrench className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Huoltopaikka</p>
+                      <p className="font-medium">{vehicle.service_location_name}</p>
+                      {vehicle.service_location_phone && (
+                        <a 
+                          href={`tel:${vehicle.service_location_phone}`}
+                          className="mt-1 flex items-center gap-1 text-sm text-primary hover:underline"
+                        >
+                          <Phone className="h-3 w-3" />
+                          {vehicle.service_location_phone}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Mileage Status Card */}
         <Card>
