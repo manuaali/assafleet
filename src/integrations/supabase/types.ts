@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      inspection_items: {
+        Row: {
+          created_at: string
+          id: string
+          image_urls: string[] | null
+          inspection_id: string
+          item_key: string
+          item_label: string
+          notes: string | null
+          status: Database["public"]["Enums"]["inspection_item_status"] | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_urls?: string[] | null
+          inspection_id: string
+          item_key: string
+          item_label: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["inspection_item_status"] | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_urls?: string[] | null
+          inspection_id?: string
+          item_key?: string
+          item_label?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["inspection_item_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_items_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leasing_companies: {
         Row: {
           contact_info: string | null
@@ -121,6 +162,50 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicle_inspections: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          inspection_month: string
+          notes: string | null
+          status: Database["public"]["Enums"]["inspection_status"]
+          updated_at: string
+          user_id: string
+          vehicle_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          inspection_month: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["inspection_status"]
+          updated_at?: string
+          user_id: string
+          vehicle_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          inspection_month?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["inspection_status"]
+          updated_at?: string
+          user_id?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_inspections_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicles: {
         Row: {
           contract_end_date: string | null
@@ -215,6 +300,8 @@ export type Database = {
     Enums: {
       app_role: "superadmin" | "admin" | "user"
       fuel_type: "petrol" | "diesel" | "hybrid" | "electric" | "plugin_hybrid"
+      inspection_item_status: "ok" | "minor_issue" | "major_issue"
+      inspection_status: "pending" | "completed" | "overdue"
       vehicle_status: "ordered" | "active" | "returning" | "returned"
     }
     CompositeTypes: {
@@ -345,6 +432,8 @@ export const Constants = {
     Enums: {
       app_role: ["superadmin", "admin", "user"],
       fuel_type: ["petrol", "diesel", "hybrid", "electric", "plugin_hybrid"],
+      inspection_item_status: ["ok", "minor_issue", "major_issue"],
+      inspection_status: ["pending", "completed", "overdue"],
       vehicle_status: ["ordered", "active", "returning", "returned"],
     },
   },

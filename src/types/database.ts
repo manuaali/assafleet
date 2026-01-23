@@ -1,10 +1,15 @@
 // Custom types for the application (extending Supabase types)
+// Updated: Vehicle inspection types added
 
 export type AppRole = "superadmin" | "admin" | "user";
 
 export type VehicleStatus = "ordered" | "active" | "returning" | "returned";
 
 export type FuelType = "petrol" | "diesel" | "hybrid" | "electric" | "plugin_hybrid";
+
+export type InspectionStatus = "pending" | "completed" | "overdue";
+
+export type InspectionItemStatus = "ok" | "minor_issue" | "major_issue";
 
 export interface Profile {
   id: string;
@@ -67,6 +72,45 @@ export interface MileageLog {
   created_at: string;
 }
 
+export interface VehicleInspection {
+  id: string;
+  vehicle_id: string;
+  user_id: string;
+  inspection_month: string;
+  status: InspectionStatus;
+  completed_at: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InspectionItem {
+  id: string;
+  inspection_id: string;
+  item_key: string;
+  item_label: string;
+  status: InspectionItemStatus | null;
+  notes: string | null;
+  image_urls: string[] | null;
+  created_at: string;
+}
+
+export interface InspectionWithItems extends VehicleInspection {
+  inspection_items?: InspectionItem[];
+  vehicle?: Vehicle;
+}
+
+// Checklist items for monthly inspection
+export const inspectionChecklistItems = [
+  { key: "general_condition", label: "Ajoneuvon yleiskunto" },
+  { key: "cleanliness", label: "Siisteys" },
+  { key: "visible_damages", label: "Näkyvät vauriot" },
+  { key: "lights_indicators", label: "Valot ja merkkivalot" },
+  { key: "tires_pressure", label: "Renkaiden kunto ja ilmanpaineet" },
+  { key: "fluids_leaks", label: "Nesteet ja mahdolliset vuodot" },
+  { key: "windows_wipers", label: "Lasit ja pyyhkijät" },
+] as const;
+
 // Helper functions for display
 export const vehicleStatusLabels: Record<VehicleStatus, string> = {
   ordered: "Tilattu",
@@ -87,4 +131,16 @@ export const roleLabels: Record<AppRole, string> = {
   superadmin: "Pääkäyttäjä",
   admin: "Ylläpitäjä",
   user: "Käyttäjä",
+};
+
+export const inspectionStatusLabels: Record<InspectionStatus, string> = {
+  pending: "Odottaa",
+  completed: "Suoritettu",
+  overdue: "Myöhässä",
+};
+
+export const inspectionItemStatusLabels: Record<InspectionItemStatus, string> = {
+  ok: "Kunnossa",
+  minor_issue: "Pieni puute",
+  major_issue: "Vakava puute",
 };

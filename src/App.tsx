@@ -11,6 +11,7 @@ import Vehicles from "./pages/Vehicles";
 import Users from "./pages/Users";
 import LeasingCompanies from "./pages/LeasingCompanies";
 import MyVehicle from "./pages/MyVehicle";
+import VehicleInspection from "./pages/VehicleInspection";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <MyVehicle />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inspection"
+              element={
+                <ProtectedRoute>
+                  <VehicleInspection />
                 </ProtectedRoute>
               }
             />
