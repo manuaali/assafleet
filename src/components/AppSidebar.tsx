@@ -24,6 +24,7 @@ import {
   Gauge,
   Building2,
   Settings,
+  ClipboardCheck,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -71,6 +72,12 @@ export function AppSidebar() {
       title: "Oma ajoneuvo",
       url: "/my-vehicle",
       icon: Gauge,
+      visible: !isAdmin,
+    },
+    {
+      title: "Kuukausitarkastus",
+      url: "/inspection",
+      icon: ClipboardCheck,
       visible: !isAdmin,
     },
   ].filter((item) => item.visible);
