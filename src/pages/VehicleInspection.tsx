@@ -6,8 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { InspectionChecklist } from "@/components/inspection/InspectionChecklist";
+import { AdminInspectionList } from "@/components/inspection/AdminInspectionList";
 import type {
   Vehicle,
   VehicleInspection as VehicleInspectionType,
@@ -26,8 +28,9 @@ import {
   AlertTriangle,
   ChevronRight,
   History,
+  Users,
 } from "lucide-react";
-import { format, startOfMonth, isThisMonth } from "date-fns";
+import { format, startOfMonth } from "date-fns";
 import { fi } from "date-fns/locale";
 
 interface InspectionWithDetails extends VehicleInspectionType {
@@ -35,7 +38,7 @@ interface InspectionWithDetails extends VehicleInspectionType {
 }
 
 export default function VehicleInspectionPage() {
-  const { user } = useAuth();
+  const { user, isAdmin, isSuperAdmin } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -43,6 +46,9 @@ export default function VehicleInspectionPage() {
   const [pastInspections, setPastInspections] = useState<InspectionWithDetails[]>([]);
   const [showChecklist, setShowChecklist] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("my-inspection");
+
+  const canViewAll = isAdmin || isSuperAdmin;
 
   useEffect(() => {
     if (user) {
@@ -159,45 +165,13 @@ export default function VehicleInspectionPage() {
     fetchData();
   };
 
-  if (loading) {
+  const renderUserInspectionView = () => {
+    const isCompleted = currentInspection?.status === "completed";
+    const isPending = currentInspection?.status === "pending";
+    const needsInspection = !currentInspection;
+
     return (
-      <DashboardLayout>
-        <div className="space-y-6">
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-48 w-full" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!vehicle) {
-    return (
-      <DashboardLayout>
-        <div className="flex flex-col items-center justify-center py-12">
-          <Car className="h-16 w-16 text-muted-foreground mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Ei ajoneuvoa</h2>
-          <p className="text-muted-foreground text-center">
-            Sinulle ei ole määritetty aktiivista ajoneuvoa.
-          </p>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  const isCompleted = currentInspection?.status === "completed";
-  const isPending = currentInspection?.status === "pending";
-  const needsInspection = !currentInspection;
-
-  return (
-    <DashboardLayout>
-      <div className="animate-fade-in space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Kuukausitarkastus</h1>
-          <p className="text-muted-foreground">
-            {format(new Date(), "LLLL yyyy", { locale: fi })} - {vehicle.make} {vehicle.model}
-          </p>
-        </div>
-
+      <>
         {/* Current Month Status */}
         {!showChecklist && !showHistory && (
           <>
@@ -406,6 +380,101 @@ export default function VehicleInspectionPage() {
             </Card>
           </div>
         )}
+      </>
+    );
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Admin without personal vehicle - show admin view only
+  if (canViewAll && !vehicle) {
+    return (
+      <DashboardLayout>
+        <div className="animate-fade-in space-y-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Kuukausitarkastukset</h1>
+            <p className="text-muted-foreground">
+              Hallinnoi kaikkien ajoneuvojen tarkastuksia
+            </p>
+          </div>
+          <AdminInspectionList />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Regular user without vehicle
+  if (!vehicle) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center py-12">
+          <Car className="h-16 w-16 text-muted-foreground mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Ei ajoneuvoa</h2>
+          <p className="text-muted-foreground text-center">
+            Sinulle ei ole määritetty aktiivista ajoneuvoa.
+          </p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Admin with personal vehicle - show tabs
+  if (canViewAll) {
+    return (
+      <DashboardLayout>
+        <div className="animate-fade-in space-y-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Kuukausitarkastukset</h1>
+            <p className="text-muted-foreground">
+              {format(new Date(), "LLLL yyyy", { locale: fi })}
+            </p>
+          </div>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="my-inspection" className="gap-2">
+                <Car className="h-4 w-4" />
+                Oma tarkastus
+              </TabsTrigger>
+              <TabsTrigger value="all-inspections" className="gap-2">
+                <Users className="h-4 w-4" />
+                Kaikki tarkastukset
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="my-inspection" className="mt-6 space-y-6">
+              {renderUserInspectionView()}
+            </TabsContent>
+
+            <TabsContent value="all-inspections" className="mt-6">
+              <AdminInspectionList />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Regular user with vehicle
+  return (
+    <DashboardLayout>
+      <div className="animate-fade-in space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Kuukausitarkastus</h1>
+          <p className="text-muted-foreground">
+            {format(new Date(), "LLLL yyyy", { locale: fi })} - {vehicle.make} {vehicle.model}
+          </p>
+        </div>
+        {renderUserInspectionView()}
       </div>
     </DashboardLayout>
   );
