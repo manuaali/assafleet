@@ -29,7 +29,6 @@ import {
   Building2,
   Settings,
   ClipboardCheck,
-  History,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -118,12 +117,6 @@ export function AppSidebar() {
       icon: ClipboardCheck,
       // Show for users without admin role, OR for admins/superadmins who have a vehicle
       visible: !isAdmin || hasVehicle,
-    },
-    {
-      title: "Lokitiedot",
-      url: "/vehicle-logs",
-      icon: History,
-      visible: isAdmin,
     },
   ].filter((item) => item.visible);
 

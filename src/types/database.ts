@@ -3,7 +3,7 @@
 
 export type AppRole = "superadmin" | "admin" | "user";
 
-export type VehicleStatus = "ordered" | "active" | "returning" | "returned";
+export type VehicleStatus = "ordered" | "active" | "returning" | "returned" | "out_of_use";
 
 export type FuelType = "petrol" | "diesel" | "hybrid" | "electric" | "plugin_hybrid";
 
@@ -117,6 +117,7 @@ export const vehicleStatusLabels: Record<VehicleStatus, string> = {
   active: "Aktiivinen",
   returning: "Palautuksessa",
   returned: "Palautettu",
+  out_of_use: "Pois käytöstä",
 };
 
 export const fuelTypeLabels: Record<FuelType, string> = {

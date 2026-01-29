@@ -367,7 +367,12 @@ export type Database = {
       fuel_type: "petrol" | "diesel" | "hybrid" | "electric" | "plugin_hybrid"
       inspection_item_status: "ok" | "minor_issue" | "major_issue"
       inspection_status: "pending" | "completed" | "overdue"
-      vehicle_status: "ordered" | "active" | "returning" | "returned"
+      vehicle_status:
+        | "ordered"
+        | "active"
+        | "returning"
+        | "returned"
+        | "out_of_use"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -499,7 +504,13 @@ export const Constants = {
       fuel_type: ["petrol", "diesel", "hybrid", "electric", "plugin_hybrid"],
       inspection_item_status: ["ok", "minor_issue", "major_issue"],
       inspection_status: ["pending", "completed", "overdue"],
-      vehicle_status: ["ordered", "active", "returning", "returned"],
+      vehicle_status: [
+        "ordered",
+        "active",
+        "returning",
+        "returned",
+        "out_of_use",
+      ],
     },
   },
 } as const

@@ -12,7 +12,6 @@ import Users from "./pages/Users";
 import LeasingCompanies from "./pages/LeasingCompanies";
 import MyVehicle from "./pages/MyVehicle";
 import VehicleInspection from "./pages/VehicleInspection";
-import VehicleLogs from "./pages/VehicleLogs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -72,14 +71,6 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <VehicleInspection />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/vehicle-logs"
-              element={
-                <ProtectedRoute requireAdmin>
-                  <VehicleLogs />
                 </ProtectedRoute>
               }
             />
