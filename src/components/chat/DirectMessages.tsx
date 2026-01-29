@@ -3,8 +3,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { UserAvatar } from "@/components/profile/UserAvatar";
 import { DirectMessageThread } from "./DirectMessageThread";
 import { MessageCircle } from "lucide-react";
 
@@ -12,6 +12,7 @@ interface UserWithRole {
   user_id: string;
   email: string;
   full_name: string | null;
+  avatar_url: string | null;
   role: "superadmin" | "admin" | "user";
 }
 
@@ -19,6 +20,7 @@ interface Conversation {
   partnerId: string;
   partnerName: string;
   partnerEmail: string;
+  partnerAvatarUrl: string | null;
   partnerRole: "superadmin" | "admin" | "user";
   lastMessage: string;
   lastMessageAt: string;
@@ -40,7 +42,7 @@ export function DirectMessages() {
       // Fetch profiles with roles
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, email, full_name");
+        .select("user_id, email, full_name, avatar_url");
 
       const { data: roles } = await supabase
         .from("user_roles")
@@ -126,6 +128,7 @@ export function DirectMessages() {
             partnerId,
             partnerName: partner.full_name || partner.email.split("@")[0],
             partnerEmail: partner.email,
+            partnerAvatarUrl: partner.avatar_url,
             partnerRole: partner.role,
             ...conv,
           });
@@ -190,6 +193,7 @@ export function DirectMessages() {
       <DirectMessageThread
         partnerId={selectedPartnerId}
         partnerName={partner?.full_name || partner?.email.split("@")[0] || "Tuntematon"}
+        partnerAvatarUrl={partner?.avatar_url}
         onBack={() => setSelectedPartnerId(null)}
       />
     );
@@ -228,11 +232,12 @@ export function DirectMessages() {
                     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
                     onClick={() => setSelectedPartnerId(u.user_id)}
                   >
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback>
-                        {(u.full_name || u.email).substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                      avatarUrl={u.avatar_url}
+                      fullName={u.full_name}
+                      email={u.email}
+                      size="lg"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-medium truncate">
@@ -272,11 +277,12 @@ export function DirectMessages() {
                     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
                     onClick={() => setSelectedPartnerId(conv.partnerId)}
                   >
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback>
-                        {conv.partnerName.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                      avatarUrl={conv.partnerAvatarUrl}
+                      fullName={conv.partnerName}
+                      email={conv.partnerEmail}
+                      size="lg"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-medium truncate">

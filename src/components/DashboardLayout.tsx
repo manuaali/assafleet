@@ -1,11 +1,45 @@
+import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { PhonePromptDialog } from "@/components/profile/PhonePromptDialog";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const { user } = useAuth();
+  const [showPhonePrompt, setShowPhonePrompt] = useState(false);
+
+  useEffect(() => {
+    const checkPhoneNumber = async () => {
+      if (!user) return;
+
+      // Check if user has skipped this prompt
+      const skipped = localStorage.getItem(`phone_prompt_skipped_${user.id}`);
+      if (skipped) return;
+
+      // Check if user has phone number
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("phone")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (profile && !profile.phone) {
+        setShowPhonePrompt(true);
+      }
+    };
+
+    checkPhoneNumber();
+  }, [user]);
+
+  const handlePhonePromptComplete = () => {
+    setShowPhonePrompt(false);
+  };
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -19,6 +53,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </main>
         </SidebarInset>
       </div>
+
+      <PhonePromptDialog 
+        open={showPhonePrompt} 
+        onComplete={handlePhonePromptComplete} 
+      />
     </SidebarProvider>
   );
 }

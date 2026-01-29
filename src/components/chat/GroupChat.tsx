@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/profile/UserAvatar";
 import { Send } from "lucide-react";
 import { format } from "date-fns";
 import { fi } from "date-fns/locale";
@@ -22,6 +22,7 @@ interface Profile {
   user_id: string;
   full_name: string | null;
   email: string;
+  avatar_url: string | null;
 }
 
 export function GroupChat() {
@@ -57,7 +58,7 @@ export function GroupChat() {
         const userIds = [...new Set(msgs.map(m => m.user_id))];
         const { data: profilesData } = await supabase
           .from("profiles")
-          .select("user_id, full_name, email")
+          .select("user_id, full_name, email, avatar_url")
           .in("user_id", userIds);
 
         if (profilesData) {
@@ -90,7 +91,7 @@ export function GroupChat() {
           if (!profiles.has(newMsg.user_id)) {
             const { data: profileData } = await supabase
               .from("profiles")
-              .select("user_id, full_name, email")
+              .select("user_id, full_name, email, avatar_url")
               .eq("user_id", newMsg.user_id)
               .maybeSingle();
 
@@ -156,6 +157,10 @@ export function GroupChat() {
     return name.substring(0, 2).toUpperCase();
   };
 
+  const getProfile = (message: GroupMessage) => {
+    return profiles.get(message.user_id);
+  };
+
   if (loading) {
     return (
       <Card>
@@ -181,16 +186,19 @@ export function GroupChat() {
             ) : (
               messages.map((message) => {
                 const isOwn = message.user_id === user?.id;
+                const profile = getProfile(message);
                 return (
                   <div
                     key={message.id}
                     className={`flex gap-3 ${isOwn ? "flex-row-reverse" : ""}`}
                   >
-                    <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarFallback className="text-xs">
-                        {getInitials(message)}
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                      avatarUrl={profile?.avatar_url}
+                      fullName={profile?.full_name}
+                      email={profile?.email}
+                      size="md"
+                      className="shrink-0"
+                    />
                     <div
                       className={`max-w-[70%] ${isOwn ? "items-end" : "items-start"}`}
                     >

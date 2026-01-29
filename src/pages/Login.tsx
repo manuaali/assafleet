@@ -11,6 +11,7 @@ import { Loader2, Car, Eye, EyeOff } from "lucide-react";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -24,16 +25,25 @@ export default function Login() {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { error, data } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
               full_name: fullName,
+              phone: phone,
             },
             emailRedirectTo: window.location.origin,
           },
         });
+
+        if (!error && data.user) {
+          // Update profile with phone number
+          await supabase
+            .from("profiles")
+            .update({ phone: phone || null })
+            .eq("user_id", data.user.id);
+        }
 
         if (error) throw error;
 
@@ -89,18 +99,31 @@ export default function Login() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {isSignUp && (
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Koko nimi</Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="Matti Meikäläinen"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required={isSignUp}
-                    disabled={isLoading}
-                  />
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Koko nimi</Label>
+                    <Input
+                      id="fullName"
+                      type="text"
+                      placeholder="Matti Meikäläinen"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      required={isSignUp}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Puhelinnumero</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="+358 40 123 4567"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </>
               )}
 
               <div className="space-y-2">

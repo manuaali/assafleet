@@ -16,10 +16,11 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useMileageDueStatus } from "@/hooks/use-mileage-due";
 import { cn } from "@/lib/utils";
+import { UserAvatar } from "@/components/profile/UserAvatar";
+import { ProfileDialog } from "@/components/profile/ProfileDialog";
 import {
   Car,
   LayoutDashboard,
@@ -39,28 +40,42 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const [userVehicleId, setUserVehicleId] = useState<string | null>(null);
   const [hasVehicle, setHasVehicle] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ full_name: string | null; avatar_url: string | null } | null>(null);
 
   const isCollapsed = state === "collapsed";
 
-  // Fetch user's vehicle to check mileage due status (for all users including admins)
+  // Fetch user's vehicle and profile
   useEffect(() => {
     if (user) {
-      const fetchUserVehicle = async () => {
-        const { data } = await supabase
+      const fetchUserData = async () => {
+        // Fetch vehicle
+        const { data: vehicleData } = await supabase
           .from("vehicles")
           .select("id")
           .eq("responsible_user_id", user.id)
           .maybeSingle();
         
-        if (data) {
-          setUserVehicleId(data.id);
+        if (vehicleData) {
+          setUserVehicleId(vehicleData.id);
           setHasVehicle(true);
         } else {
           setUserVehicleId(null);
           setHasVehicle(false);
         }
+
+        // Fetch profile
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("full_name, avatar_url")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        if (profileData) {
+          setUserProfile(profileData);
+        }
       };
-      fetchUserVehicle();
+      fetchUserData();
     }
   }, [user]);
 
@@ -71,7 +86,7 @@ export function AppSidebar() {
     navigate("/login");
   };
 
-  const userInitials = user?.email?.substring(0, 2).toUpperCase() || "??";
+  
 
   // Determine if mileage logging should highlight the menu item
   const shouldHighlightMileage = hasVehicle && mileageDueStatus?.isDue && !mileageDueStatus?.hasLoggedThisWeek;
@@ -219,15 +234,25 @@ export function AppSidebar() {
 
       <SidebarFooter className="border-t border-sidebar-border p-4">
         <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground text-sm">
-              {userInitials}
-            </AvatarFallback>
-          </Avatar>
+          <button
+            onClick={() => setIsProfileOpen(true)}
+            className="focus:outline-none focus:ring-2 focus:ring-primary rounded-full"
+          >
+            <UserAvatar
+              avatarUrl={userProfile?.avatar_url}
+              fullName={userProfile?.full_name}
+              email={user?.email}
+              size="lg"
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+            />
+          </button>
           {!isCollapsed && (
-            <div className="flex flex-1 flex-col overflow-hidden">
-              <span className="truncate text-sm font-medium text-sidebar-foreground">
-                {user?.email}
+            <div 
+              className="flex flex-1 flex-col overflow-hidden cursor-pointer"
+              onClick={() => setIsProfileOpen(true)}
+            >
+              <span className="truncate text-sm font-medium text-sidebar-foreground hover:underline">
+                {userProfile?.full_name || user?.email}
               </span>
               <span className="text-xs text-sidebar-foreground/60">
                 {userRole === "superadmin"
@@ -248,6 +273,8 @@ export function AppSidebar() {
           </Button>
         </div>
       </SidebarFooter>
+
+      <ProfileDialog open={isProfileOpen} onOpenChange={setIsProfileOpen} />
     </Sidebar>
   );
 }

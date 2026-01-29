@@ -38,6 +38,7 @@ import { MileageStatusIndicator } from "@/components/vehicles/MileageStatusIndic
 import { AdminMileageLogDialog } from "@/components/vehicles/AdminMileageLogDialog";
 import { VehicleActionMenu } from "@/components/vehicles/VehicleActionMenu";
 import { VehicleAssignmentHistoryDialog } from "@/components/vehicles/VehicleAssignmentHistoryDialog";
+import { UserAvatar } from "@/components/profile/UserAvatar";
 import { useAllVehiclesMileageStatus } from "@/hooks/use-mileage-due";
 import { Plus, Search, Car, Gauge } from "lucide-react";
 import {
@@ -247,6 +248,11 @@ export default function Vehicles() {
     if (!id) return "-";
     const user = users.find((u) => u.user_id === id);
     return user?.full_name || user?.email || "-";
+  };
+
+  const getUserData = (id: string | null) => {
+    if (!id) return null;
+    return users.find((u) => u.user_id === id) || null;
   };
 
   return (
@@ -643,7 +649,21 @@ export default function Vehicles() {
                           <TableCell>
                             {getLeasingCompanyName(vehicle.leasing_company_id)}
                           </TableCell>
-                          <TableCell>{getUserName(vehicle.responsible_user_id)}</TableCell>
+                          <TableCell>
+                            {vehicle.responsible_user_id ? (
+                              <div className="flex items-center gap-2">
+                                <UserAvatar
+                                  avatarUrl={getUserData(vehicle.responsible_user_id)?.avatar_url}
+                                  fullName={getUserData(vehicle.responsible_user_id)?.full_name}
+                                  email={getUserData(vehicle.responsible_user_id)?.email}
+                                  size="sm"
+                                />
+                                <span>{getUserName(vehicle.responsible_user_id)}</span>
+                              </div>
+                            ) : (
+                              "-"
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             {hasResponsibleUser ? (
                               <MileageStatusIndicator
