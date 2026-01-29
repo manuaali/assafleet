@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
 import { Search, Users as UsersIcon, Shield, ShieldCheck, User } from "lucide-react";
 import { AppRole, roleLabels } from "@/types/database";
 
@@ -36,6 +38,7 @@ interface UserWithRole {
 }
 
 export default function Users() {
+  const { user: currentUser, isSuperAdmin } = useAuth();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -222,9 +225,9 @@ export default function Users() {
                       <TableHead>Käyttäjä</TableHead>
                       <TableHead>Sähköposti</TableHead>
                       <TableHead>Puhelin</TableHead>
-                      <TableHead>Rooli</TableHead>
                       <TableHead>Liittynyt</TableHead>
-                      <TableHead>Toiminnot</TableHead>
+                      <TableHead>Rooli</TableHead>
+                      {isSuperAdmin && <TableHead>Toiminnot</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -245,32 +248,45 @@ export default function Users() {
                           <TableCell>{user.email}</TableCell>
                           <TableCell>{user.phone || "-"}</TableCell>
                           <TableCell>
-                            <Badge variant={getRoleBadgeVariant(user.role)}>
-                              {roleLabels[user.role]}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
                             {new Date(user.created_at).toLocaleDateString("fi-FI")}
                           </TableCell>
                           <TableCell>
-                            <Select
-                              value={user.role}
-                              onValueChange={(value: AppRole) =>
-                                handleRoleChange(user.user_id, value)
-                              }
-                            >
-                              <SelectTrigger className="w-[140px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(roleLabels).map(([key, label]) => (
-                                  <SelectItem key={key} value={key}>
-                                    {label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            {isSuperAdmin ? (
+                              <Select
+                                value={user.role}
+                                onValueChange={(value: AppRole) =>
+                                  handleRoleChange(user.user_id, value)
+                                }
+                              >
+                                <SelectTrigger className="w-[140px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(roleLabels).map(([key, label]) => (
+                                    <SelectItem key={key} value={key}>
+                                      {label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Badge variant={getRoleBadgeVariant(user.role)}>
+                                {roleLabels[user.role]}
+                              </Badge>
+                            )}
                           </TableCell>
+                          {isSuperAdmin && (
+                            <TableCell>
+                              {currentUser?.id !== user.user_id && (
+                                <DeleteUserDialog
+                                  userId={user.user_id}
+                                  userEmail={user.email}
+                                  userName={user.full_name}
+                                  onDeleted={fetchUsers}
+                                />
+                              )}
+                            </TableCell>
+                          )}
                         </TableRow>
                       );
                     })}

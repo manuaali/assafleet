@@ -49,7 +49,8 @@ export function ComplianceCalendar() {
 
   const fetchCustomDates = async () => {
     try {
-      const { data, error } = await supabase
+      // Using any cast since this table was just created and types haven't regenerated yet
+      const { data, error } = await (supabase as any)
         .from("custom_compliance_dates")
         .select("*")
         .order("date", { ascending: true });
@@ -60,7 +61,7 @@ export function ComplianceCalendar() {
         return;
       }
       
-      setCustomDates(data || []);
+      setCustomDates((data as CustomDate[]) || []);
     } catch (error) {
       console.log("Error fetching custom dates:", error);
     }
@@ -78,7 +79,8 @@ export function ComplianceCalendar() {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      // Using any cast since this table was just created and types haven't regenerated yet
+      const { error } = await (supabase as any)
         .from("custom_compliance_dates")
         .insert({
           date: format(newDate, "yyyy-MM-dd"),
@@ -111,7 +113,8 @@ export function ComplianceCalendar() {
 
   const handleDeleteCustomDate = async (id: string) => {
     try {
-      const { error } = await supabase
+      // Using any cast since this table was just created and types haven't regenerated yet
+      const { error } = await (supabase as any)
         .from("custom_compliance_dates")
         .delete()
         .eq("id", id);

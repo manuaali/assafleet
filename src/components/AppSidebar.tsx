@@ -38,12 +38,13 @@ export function AppSidebar() {
   const location = useLocation();
   const { state } = useSidebar();
   const [userVehicleId, setUserVehicleId] = useState<string | null>(null);
+  const [hasVehicle, setHasVehicle] = useState(false);
 
   const isCollapsed = state === "collapsed";
 
-  // Fetch user's vehicle to check mileage due status
+  // Fetch user's vehicle to check mileage due status (for all users including admins)
   useEffect(() => {
-    if (user && !isAdmin) {
+    if (user) {
       const fetchUserVehicle = async () => {
         const { data } = await supabase
           .from("vehicles")
@@ -53,11 +54,15 @@ export function AppSidebar() {
         
         if (data) {
           setUserVehicleId(data.id);
+          setHasVehicle(true);
+        } else {
+          setUserVehicleId(null);
+          setHasVehicle(false);
         }
       };
       fetchUserVehicle();
     }
-  }, [user, isAdmin]);
+  }, [user]);
 
   const { status: mileageDueStatus } = useMileageDueStatus(userVehicleId);
 
@@ -67,6 +72,10 @@ export function AppSidebar() {
   };
 
   const userInitials = user?.email?.substring(0, 2).toUpperCase() || "??";
+
+  // Determine if mileage logging should highlight the menu item
+  const shouldHighlightMileage = hasVehicle && mileageDueStatus?.isDue && !mileageDueStatus?.hasLoggedThisWeek;
+  const isMileageOverdue = hasVehicle && mileageDueStatus?.isOverdue;
 
   // Menu items based on role
   const menuItems = [
@@ -98,15 +107,17 @@ export function AppSidebar() {
       title: "Oma ajoneuvo",
       url: "/my-vehicle",
       icon: Gauge,
-      visible: !isAdmin,
-      highlight: mileageDueStatus?.isDue && !mileageDueStatus?.hasLoggedThisWeek,
-      isOverdue: mileageDueStatus?.isOverdue,
+      // Show for users without admin role, OR for admins/superadmins who have a vehicle
+      visible: !isAdmin || hasVehicle,
+      highlight: shouldHighlightMileage,
+      isOverdue: isMileageOverdue,
     },
     {
       title: "Kuukausitarkastus",
       url: "/inspection",
       icon: ClipboardCheck,
-      visible: !isAdmin,
+      // Show for users without admin role, OR for admins/superadmins who have a vehicle
+      visible: !isAdmin || hasVehicle,
     },
   ].filter((item) => item.visible);
 
