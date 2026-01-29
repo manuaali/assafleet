@@ -189,6 +189,44 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicle_assignment_logs: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_user_id: string | null
+          notes: string | null
+          previous_user_id: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_user_id?: string | null
+          notes?: string | null
+          previous_user_id?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_user_id?: string | null
+          notes?: string | null
+          previous_user_id?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_assignment_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicle_inspections: {
         Row: {
           completed_at: string | null
