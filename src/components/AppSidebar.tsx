@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -16,6 +17,9 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
+import { useMileageDueStatus } from "@/hooks/use-mileage-due";
+import { cn } from "@/lib/utils";
 import {
   Car,
   LayoutDashboard,
@@ -25,6 +29,7 @@ import {
   Building2,
   Settings,
   ClipboardCheck,
+  AlertCircle,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -32,8 +37,29 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { state } = useSidebar();
+  const [userVehicleId, setUserVehicleId] = useState<string | null>(null);
 
   const isCollapsed = state === "collapsed";
+
+  // Fetch user's vehicle to check mileage due status
+  useEffect(() => {
+    if (user && !isAdmin) {
+      const fetchUserVehicle = async () => {
+        const { data } = await supabase
+          .from("vehicles")
+          .select("id")
+          .eq("responsible_user_id", user.id)
+          .maybeSingle();
+        
+        if (data) {
+          setUserVehicleId(data.id);
+        }
+      };
+      fetchUserVehicle();
+    }
+  }, [user, isAdmin]);
+
+  const { status: mileageDueStatus } = useMileageDueStatus(userVehicleId);
 
   const handleSignOut = async () => {
     await signOut();
@@ -73,6 +99,8 @@ export function AppSidebar() {
       url: "/my-vehicle",
       icon: Gauge,
       visible: !isAdmin,
+      highlight: mileageDueStatus?.isDue && !mileageDueStatus?.hasLoggedThisWeek,
+      isOverdue: mileageDueStatus?.isOverdue,
     },
     {
       title: "Kuukausitarkastus",
@@ -115,13 +143,25 @@ export function AppSidebar() {
                     asChild
                     isActive={location.pathname === item.url}
                     tooltip={item.title}
+                    className={cn(
+                      item.highlight && !item.isOverdue && "bg-warning/20 text-warning-foreground border-l-2 border-warning",
+                      item.highlight && item.isOverdue && "bg-destructive/20 text-destructive border-l-2 border-destructive"
+                    )}
                   >
                     <NavLink
                       to={item.url}
                       className="flex items-center gap-3"
                       activeClassName="bg-sidebar-accent text-sidebar-accent-foreground"
                     >
-                      <item.icon className="h-4 w-4" />
+                      <div className="relative">
+                        <item.icon className="h-4 w-4" />
+                        {item.highlight && (
+                          <span className={cn(
+                            "absolute -top-1 -right-1 h-2 w-2 rounded-full",
+                            item.isOverdue ? "bg-destructive animate-pulse" : "bg-warning animate-pulse"
+                          )} />
+                        )}
+                      </div>
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>

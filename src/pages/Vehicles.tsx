@@ -34,7 +34,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { VehicleDetailDialog } from "@/components/VehicleDetailDialog";
-import { Plus, Search, Car } from "lucide-react";
+import { MileageStatusIndicator } from "@/components/vehicles/MileageStatusIndicator";
+import { AdminMileageLogDialog } from "@/components/vehicles/AdminMileageLogDialog";
+import { useAllVehiclesMileageStatus } from "@/hooks/use-mileage-due";
+import { Plus, Search, Car, Gauge } from "lucide-react";
 import {
   VehicleStatus,
   FuelType,
@@ -76,10 +79,14 @@ export default function Vehicles() {
   const [statusFilter, setStatusFilter] = useState<VehicleStatus | "all">("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isMileageDialogOpen, setIsMileageDialogOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const { isAdmin, isSuperAdmin } = useAuth();
+  
+  // Get mileage due status for all vehicles
+  const { statusMap: mileageStatusMap, loading: mileageStatusLoading } = useAllVehiclesMileageStatus();
 
   // New vehicle form state
   const [newVehicle, setNewVehicle] = useState({
@@ -596,58 +603,91 @@ export default function Vehicles() {
                       <TableHead>Leasingyhtiö</TableHead>
                       <TableHead>Vastuuhenkilö</TableHead>
                       <TableHead className="text-right">Km</TableHead>
+                      <TableHead className="w-[80px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredVehicles.map((vehicle) => (
-                      <TableRow 
-                        key={vehicle.id}
-                        className={(isAdmin || isSuperAdmin) ? "cursor-pointer hover:bg-muted/50" : ""}
-                        onClick={() => {
-                          if (isAdmin || isSuperAdmin) {
-                            setSelectedVehicle(vehicle);
-                            setIsDetailDialogOpen(true);
-                          }
-                        }}
-                      >
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
-                              <Car className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                            <div>
-                              <div className="font-medium">
-                                {vehicle.make} {vehicle.model}
+                    {filteredVehicles.map((vehicle) => {
+                      const mileageStatus = mileageStatusMap.get(vehicle.id);
+                      const hasResponsibleUser = !!vehicle.responsible_user_id;
+                      
+                      return (
+                        <TableRow 
+                          key={vehicle.id}
+                          className={(isAdmin || isSuperAdmin) ? "cursor-pointer hover:bg-muted/50" : ""}
+                          onClick={() => {
+                            if (isAdmin || isSuperAdmin) {
+                              setSelectedVehicle(vehicle);
+                              setIsDetailDialogOpen(true);
+                            }
+                          }}
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+                                <Car className="h-4 w-4 text-muted-foreground" />
                               </div>
-                              <div className="text-sm text-muted-foreground">
-                                {fuelTypeLabels[vehicle.fuel_type]}
+                              <div>
+                                <div className="font-medium">
+                                  {vehicle.make} {vehicle.model}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  {fuelTypeLabels[vehicle.fuel_type]}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-mono">
-                          {vehicle.license_plate}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusBadgeClass(vehicle.status)}>
-                            {vehicleStatusLabels[vehicle.status]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {getLeasingCompanyName(vehicle.leasing_company_id)}
-                        </TableCell>
-                        <TableCell>{getUserName(vehicle.responsible_user_id)}</TableCell>
-                        <TableCell className="text-right">
-                          {vehicle.current_kilometers?.toLocaleString("fi-FI") || "-"}
-                          {vehicle.contract_kilometers && (
-                            <span className="text-muted-foreground">
-                              {" "}
-                              / {vehicle.contract_kilometers.toLocaleString("fi-FI")}
-                            </span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                          </TableCell>
+                          <TableCell className="font-mono">
+                            {vehicle.license_plate}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getStatusBadgeClass(vehicle.status)}>
+                              {vehicleStatusLabels[vehicle.status]}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {getLeasingCompanyName(vehicle.leasing_company_id)}
+                          </TableCell>
+                          <TableCell>{getUserName(vehicle.responsible_user_id)}</TableCell>
+                          <TableCell className="text-right">
+                            {hasResponsibleUser ? (
+                              <MileageStatusIndicator
+                                status={mileageStatus}
+                                kilometers={vehicle.current_kilometers}
+                                contractKilometers={vehicle.contract_kilometers}
+                              />
+                            ) : (
+                              <>
+                                {vehicle.current_kilometers?.toLocaleString("fi-FI") || "-"}
+                                {vehicle.contract_kilometers && (
+                                  <span className="text-muted-foreground">
+                                    {" "}
+                                    / {vehicle.contract_kilometers.toLocaleString("fi-FI")}
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {hasResponsibleUser && mileageStatus && !mileageStatus.hasLoggedThisWeek && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedVehicle(vehicle);
+                                  setIsMileageDialogOpen(true);
+                                }}
+                                title="Kirjaa kilometrit käyttäjän puolesta"
+                              >
+                                <Gauge className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
@@ -665,6 +705,19 @@ export default function Vehicles() {
         onOpenChange={setIsDetailDialogOpen}
         onVehicleUpdated={fetchData}
       />
+      
+      {/* Admin Mileage Log Dialog */}
+      {selectedVehicle && selectedVehicle.responsible_user_id && (
+        <AdminMileageLogDialog
+          open={isMileageDialogOpen}
+          onOpenChange={setIsMileageDialogOpen}
+          vehicleId={selectedVehicle.id}
+          vehicleName={`${selectedVehicle.make} ${selectedVehicle.model}`}
+          responsibleUserId={selectedVehicle.responsible_user_id}
+          currentKilometers={selectedVehicle.current_kilometers}
+          onMileageLogged={fetchData}
+        />
+      )}
     </DashboardLayout>
   );
 }
