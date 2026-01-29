@@ -14,6 +14,14 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
+interface ServerRoleResponse {
+  role: AppRole;
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
+  userId: string;
+  verifiedAt: string;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -21,23 +29,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<AppRole | null>(null);
+  const [serverVerifiedAdmin, setServerVerifiedAdmin] = useState(false);
+  const [serverVerifiedSuperAdmin, setServerVerifiedSuperAdmin] = useState(false);
 
-  const fetchUserRole = async (userId: string) => {
+  // Fetch role from server-side edge function for secure verification
+  const fetchUserRoleFromServer = async (accessToken: string): Promise<ServerRoleResponse | null> => {
     try {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .single();
+      const response = await supabase.functions.invoke('get-user-role', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
 
-      if (error) {
-        console.error("Error fetching user role:", error);
+      if (response.error) {
+        console.error("Error fetching role from server:", response.error);
         return null;
       }
-      
-      return data?.role as AppRole;
+
+      return response.data as ServerRoleResponse;
     } catch (error) {
-      console.error("Error in fetchUserRole:", error);
+      console.error("Error in fetchUserRoleFromServer:", error);
       return null;
     }
   };
@@ -49,14 +60,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user) {
-          // Defer role fetching to avoid blocking
+        if (session?.access_token) {
+          // Fetch role from server-side for secure verification
           setTimeout(async () => {
-            const role = await fetchUserRole(session.user.id);
-            setUserRole(role);
+            const serverRole = await fetchUserRoleFromServer(session.access_token);
+            if (serverRole) {
+              setUserRole(serverRole.role);
+              setServerVerifiedAdmin(serverRole.isAdmin);
+              setServerVerifiedSuperAdmin(serverRole.isSuperAdmin);
+            } else {
+              setUserRole('user');
+              setServerVerifiedAdmin(false);
+              setServerVerifiedSuperAdmin(false);
+            }
           }, 0);
         } else {
           setUserRole(null);
+          setServerVerifiedAdmin(false);
+          setServerVerifiedSuperAdmin(false);
         }
         
         setLoading(false);
@@ -68,9 +89,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       
-      if (session?.user) {
-        const role = await fetchUserRole(session.user.id);
-        setUserRole(role);
+      if (session?.access_token) {
+        const serverRole = await fetchUserRoleFromServer(session.access_token);
+        if (serverRole) {
+          setUserRole(serverRole.role);
+          setServerVerifiedAdmin(serverRole.isAdmin);
+          setServerVerifiedSuperAdmin(serverRole.isSuperAdmin);
+        } else {
+          setUserRole('user');
+          setServerVerifiedAdmin(false);
+          setServerVerifiedSuperAdmin(false);
+        }
       }
       
       setLoading(false);
@@ -86,10 +115,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setUserRole(null);
+    setServerVerifiedAdmin(false);
+    setServerVerifiedSuperAdmin(false);
   };
 
-  const isAdmin = userRole === "admin" || userRole === "superadmin";
-  const isSuperAdmin = userRole === "superadmin";
+  // Use server-verified roles for security
+  const isAdmin = serverVerifiedAdmin;
+  const isSuperAdmin = serverVerifiedSuperAdmin;
 
   return (
     <AuthContext.Provider
