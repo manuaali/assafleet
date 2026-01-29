@@ -71,6 +71,9 @@ export function InspectionChecklist({
     }));
   };
 
+  // Store the original file paths alongside signed URLs for saving
+  const [filePaths, setFilePaths] = useState<Record<string, string[]>>({});
+
   const handleImageUpload = async (key: string, file: File) => {
     setItems((prev) => ({
       ...prev,
@@ -87,15 +90,24 @@ export function InspectionChecklist({
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
+      // Get signed URL instead of public URL
+      const { data: signedData, error: signedError } = await supabase.storage
         .from("inspection-images")
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 3600); // 1 hour expiration
+
+      if (signedError) throw signedError;
+
+      // Store both the signed URL for display and the file path for database storage
+      setFilePaths((prev) => ({
+        ...prev,
+        [key]: [...(prev[key] || []), fileName],
+      }));
 
       setItems((prev) => ({
         ...prev,
         [key]: {
           ...prev[key],
-          imageUrls: [...prev[key].imageUrls, urlData.publicUrl],
+          imageUrls: [...prev[key].imageUrls, signedData.signedUrl],
           uploading: false,
         },
       }));
@@ -118,13 +130,17 @@ export function InspectionChecklist({
     }
   };
 
-  const removeImage = (key: string, urlToRemove: string) => {
+  const removeImage = (key: string, indexToRemove: number) => {
     setItems((prev) => ({
       ...prev,
       [key]: {
         ...prev[key],
-        imageUrls: prev[key].imageUrls.filter((url) => url !== urlToRemove),
+        imageUrls: prev[key].imageUrls.filter((_, idx) => idx !== indexToRemove),
       },
+    }));
+    setFilePaths((prev) => ({
+      ...prev,
+      [key]: (prev[key] || []).filter((_, idx) => idx !== indexToRemove),
     }));
   };
 
@@ -145,14 +161,15 @@ export function InspectionChecklist({
     setSaving(true);
 
     try {
-      // Insert all inspection items
+      // Insert all inspection items - store file paths, not signed URLs
       const itemsToInsert = inspectionChecklistItems.map((item) => ({
         inspection_id: inspectionId,
         item_key: item.key,
         item_label: item.label,
         status: items[item.key].status,
         notes: items[item.key].notes || null,
-        image_urls: items[item.key].imageUrls.length > 0 ? items[item.key].imageUrls : null,
+        // Store file paths in the database, not signed URLs
+        image_urls: (filePaths[item.key] && filePaths[item.key].length > 0) ? filePaths[item.key] : null,
       }));
 
       const { error: itemsError } = await supabase
@@ -266,7 +283,7 @@ export function InspectionChecklist({
                         />
                         <button
                           type="button"
-                          onClick={() => removeImage(item.key, url)}
+                          onClick={() => removeImage(item.key, idx)}
                           className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           <Trash2 className="h-3 w-3" />

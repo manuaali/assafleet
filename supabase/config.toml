@@ -1,1 +1,10 @@
 project_id = "ccrexhnjemxlkslsdpic"
+
+[functions.get-signed-url]
+verify_jwt = false
+
+[functions.delete-user]
+verify_jwt = false
+
+[functions.get-user-role]
+verify_jwt = false
