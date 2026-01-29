@@ -36,6 +36,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { VehicleDetailDialog } from "@/components/VehicleDetailDialog";
 import { MileageStatusIndicator } from "@/components/vehicles/MileageStatusIndicator";
 import { AdminMileageLogDialog } from "@/components/vehicles/AdminMileageLogDialog";
+import { VehicleActionMenu } from "@/components/vehicles/VehicleActionMenu";
+import { VehicleAssignmentHistoryDialog } from "@/components/vehicles/VehicleAssignmentHistoryDialog";
 import { useAllVehiclesMileageStatus } from "@/hooks/use-mileage-due";
 import { Plus, Search, Car, Gauge } from "lucide-react";
 import {
@@ -79,6 +81,7 @@ export default function Vehicles() {
   const [statusFilter, setStatusFilter] = useState<VehicleStatus | "all">("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [isMileageDialogOpen, setIsMileageDialogOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -225,11 +228,12 @@ export default function Vehicles() {
   });
 
   const getStatusBadgeClass = (status: VehicleStatus) => {
-    const classes = {
+    const classes: Record<VehicleStatus, string> = {
       ordered: "status-ordered",
       active: "status-active",
       returning: "status-returning",
       returned: "status-returned",
+      out_of_use: "bg-muted text-muted-foreground",
     };
     return classes[status];
   };
@@ -611,17 +615,8 @@ export default function Vehicles() {
                       const mileageStatus = mileageStatusMap.get(vehicle.id);
                       const hasResponsibleUser = !!vehicle.responsible_user_id;
                       
-                      return (
-                        <TableRow 
-                          key={vehicle.id}
-                          className={(isAdmin || isSuperAdmin) ? "cursor-pointer hover:bg-muted/50" : ""}
-                          onClick={() => {
-                            if (isAdmin || isSuperAdmin) {
-                              setSelectedVehicle(vehicle);
-                              setIsDetailDialogOpen(true);
-                            }
-                          }}
-                        >
+                      const rowContent = (
+                        <>
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
@@ -685,6 +680,33 @@ export default function Vehicles() {
                               </Button>
                             )}
                           </TableCell>
+                        </>
+                      );
+
+                      // Admin/Superadmin gets dropdown menu on click
+                      if (isAdmin || isSuperAdmin) {
+                        return (
+                          <VehicleActionMenu
+                            key={vehicle.id}
+                            onShowDetails={() => {
+                              setSelectedVehicle(vehicle);
+                              setIsDetailDialogOpen(true);
+                            }}
+                            onShowHistory={() => {
+                              setSelectedVehicle(vehicle);
+                              setIsHistoryDialogOpen(true);
+                            }}
+                          >
+                            <TableRow className="cursor-pointer hover:bg-muted/50">
+                              {rowContent}
+                            </TableRow>
+                          </VehicleActionMenu>
+                        );
+                      }
+
+                      return (
+                        <TableRow key={vehicle.id}>
+                          {rowContent}
                         </TableRow>
                       );
                     })}
@@ -704,6 +726,17 @@ export default function Vehicles() {
         open={isDetailDialogOpen}
         onOpenChange={setIsDetailDialogOpen}
         onVehicleUpdated={fetchData}
+      />
+      
+      {/* Vehicle Assignment History Dialog */}
+      <VehicleAssignmentHistoryDialog
+        vehicleId={selectedVehicle?.id || null}
+        vehicleName={selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model}` : ""}
+        licensePlate={selectedVehicle?.license_plate || ""}
+        currentResponsibleUserId={selectedVehicle?.responsible_user_id || null}
+        open={isHistoryDialogOpen}
+        onOpenChange={setIsHistoryDialogOpen}
+        users={users.map(u => ({ user_id: u.user_id, full_name: u.full_name, email: u.email }))}
       />
       
       {/* Admin Mileage Log Dialog */}
