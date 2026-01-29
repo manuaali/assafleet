@@ -38,7 +38,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { state } = useSidebar();
-  const [userVehicleId, setUserVehicleId] = useState<string | null>(null);
+  const [userVehicleIds, setUserVehicleIds] = useState<string[]>([]);
   const [hasVehicle, setHasVehicle] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<{ full_name: string | null; avatar_url: string | null } | null>(null);
@@ -49,18 +49,17 @@ export function AppSidebar() {
   useEffect(() => {
     if (user) {
       const fetchUserData = async () => {
-        // Fetch vehicle
-        const { data: vehicleData } = await supabase
+        // Fetch all vehicles assigned to user
+        const { data: vehiclesData } = await supabase
           .from("vehicles")
           .select("id")
-          .eq("responsible_user_id", user.id)
-          .maybeSingle();
+          .eq("responsible_user_id", user.id);
         
-        if (vehicleData) {
-          setUserVehicleId(vehicleData.id);
+        if (vehiclesData && vehiclesData.length > 0) {
+          setUserVehicleIds(vehiclesData.map(v => v.id));
           setHasVehicle(true);
         } else {
-          setUserVehicleId(null);
+          setUserVehicleIds([]);
           setHasVehicle(false);
         }
 
@@ -79,7 +78,8 @@ export function AppSidebar() {
     }
   }, [user]);
 
-  const { status: mileageDueStatus } = useMileageDueStatus(userVehicleId);
+  // Use first vehicle for mileage status indicator (if multiple vehicles, user needs to check the page)
+  const { status: mileageDueStatus } = useMileageDueStatus(userVehicleIds[0] || null);
 
   const handleSignOut = async () => {
     await signOut();
