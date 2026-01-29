@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/profile/UserAvatar";
 import { ArrowLeft, Send } from "lucide-react";
 import { format } from "date-fns";
 import { fi } from "date-fns/locale";
@@ -23,12 +23,14 @@ interface DirectMessage {
 interface DirectMessageThreadProps {
   partnerId: string;
   partnerName: string;
+  partnerAvatarUrl?: string | null;
   onBack: () => void;
 }
 
 export function DirectMessageThread({
   partnerId,
   partnerName,
+  partnerAvatarUrl,
   onBack,
 }: DirectMessageThreadProps) {
   const { user } = useAuth();
@@ -160,11 +162,11 @@ export function DirectMessageThread({
         <Button variant="ghost" size="icon" onClick={onBack}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <Avatar className="h-10 w-10">
-          <AvatarFallback>
-            {partnerName.substring(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <UserAvatar
+          avatarUrl={partnerAvatarUrl}
+          fullName={partnerName}
+          size="lg"
+        />
         <CardTitle className="text-lg">{partnerName}</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col p-0">
@@ -182,13 +184,13 @@ export function DirectMessageThread({
                     key={message.id}
                     className={`flex gap-3 ${isOwn ? "flex-row-reverse" : ""}`}
                   >
-                    <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarFallback className="text-xs">
-                        {isOwn
-                          ? (user?.email?.substring(0, 2).toUpperCase() || "ME")
-                          : partnerName.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                      avatarUrl={isOwn ? undefined : partnerAvatarUrl}
+                      fullName={isOwn ? user?.email : partnerName}
+                      email={isOwn ? user?.email : undefined}
+                      size="md"
+                      className="shrink-0"
+                    />
                     <div className={`max-w-[70%]`}>
                       <div
                         className={`flex items-center gap-2 mb-1 ${
