@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -10,6 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useMileageDueStatus, formatDueDateMessage } from "@/hooks/use-mileage-due";
+import { cn } from "@/lib/utils";
 import {
   Car,
   Fuel,
@@ -22,6 +25,7 @@ import {
   Snowflake,
   Wrench,
   Phone,
+  Clock,
 } from "lucide-react";
 import {
   Vehicle,
@@ -39,18 +43,47 @@ interface VehicleWithCompany extends Vehicle {
 
 export default function MyVehicle() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [vehicle, setVehicle] = useState<VehicleWithCompany | null>(null);
   const [mileageLogs, setMileageLogs] = useState<MileageLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [newMileage, setNewMileage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [shouldBounce, setShouldBounce] = useState(false);
+  const mileageSectionRef = useRef<HTMLDivElement>(null);
+  const mileageInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  
+  // Get mileage due status
+  const { status: mileageDueStatus, loading: mileageStatusLoading } = useMileageDueStatus(vehicle?.id);
 
   useEffect(() => {
     if (user) {
       fetchMyVehicle();
     }
   }, [user]);
+
+  // Auto-scroll to mileage section and trigger bounce animation if mileage is due
+  useEffect(() => {
+    if (!loading && vehicle && mileageDueStatus?.isDue && !mileageDueStatus?.hasLoggedThisWeek) {
+      // Small delay to ensure DOM is ready
+      const scrollTimer = setTimeout(() => {
+        mileageSectionRef.current?.scrollIntoView({ 
+          behavior: "smooth", 
+          block: "center" 
+        });
+        
+        // Trigger bounce animation after scroll
+        setTimeout(() => {
+          setShouldBounce(true);
+          // Reset bounce after animation
+          setTimeout(() => setShouldBounce(false), 1000);
+        }, 500);
+      }, 300);
+      
+      return () => clearTimeout(scrollTimer);
+    }
+  }, [loading, vehicle, mileageDueStatus]);
 
   const fetchMyVehicle = async () => {
     try {
@@ -331,12 +364,26 @@ export default function MyVehicle() {
         )}
 
         {/* Mileage Status Card */}
-        <Card>
+        <Card ref={mileageSectionRef} className={cn(
+          mileageDueStatus?.isDue && !mileageDueStatus?.hasLoggedThisWeek && "ring-2 ring-warning",
+          mileageDueStatus?.isOverdue && "ring-2 ring-destructive"
+        )}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Kilometriseuranta
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Kilometriseuranta
+              </CardTitle>
+              {mileageDueStatus && (
+                <Badge 
+                  variant={mileageDueStatus.isOverdue ? "destructive" : mileageDueStatus.isDue ? "warning" : "secondary"}
+                  className="flex items-center gap-1"
+                >
+                  <Clock className="h-3 w-3" />
+                  {formatDueDateMessage(mileageDueStatus)}
+                </Badge>
+              )}
+            </div>
             <CardDescription>
               Nykyinen lukema ja ennuste
             </CardDescription>
@@ -374,18 +421,26 @@ export default function MyVehicle() {
             </div>
 
             {/* Mileage Input */}
-            <div className="rounded-lg border bg-muted/30 p-4">
+            <div className={cn(
+              "rounded-lg border bg-muted/30 p-4 transition-all duration-300",
+              mileageDueStatus?.isDue && !mileageDueStatus?.hasLoggedThisWeek && "border-warning bg-warning/10",
+              mileageDueStatus?.isOverdue && "border-destructive bg-destructive/10"
+            )}>
               <Label htmlFor="mileage" className="text-sm font-medium">
                 Kirjaa uusi mittarilukema
               </Label>
               <div className="mt-2 flex gap-2">
                 <Input
+                  ref={mileageInputRef}
                   id="mileage"
                   type="number"
                   placeholder="esim. 45000"
                   value={newMileage}
                   onChange={(e) => setNewMileage(e.target.value)}
-                  className="flex-1"
+                  className={cn(
+                    "flex-1 transition-all duration-300",
+                    shouldBounce && "animate-bounce-once scale-105 ring-2 ring-primary"
+                  )}
                 />
                 <Button onClick={handleLogMileage} disabled={isSaving}>
                   {isSaving ? "Kirjataan..." : "Kirjaa"}
