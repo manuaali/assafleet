@@ -12,6 +12,7 @@ import Users from "./pages/Users";
 import LeasingCompanies from "./pages/LeasingCompanies";
 import MyVehicle from "./pages/MyVehicle";
 import VehicleInspection from "./pages/VehicleInspection";
+import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -71,6 +72,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <VehicleInspection />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/chat"
+              element={
+                <ProtectedRoute>
+                  <Chat />
                 </ProtectedRoute>
               }
             />

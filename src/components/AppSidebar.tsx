@@ -29,6 +29,7 @@ import {
   Building2,
   Settings,
   ClipboardCheck,
+  MessageCircle,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -117,6 +118,12 @@ export function AppSidebar() {
       icon: ClipboardCheck,
       // Show for users without admin role, OR for admins/superadmins who have a vehicle
       visible: !isAdmin || hasVehicle,
+    },
+    {
+      title: "Viestit",
+      url: "/chat",
+      icon: MessageCircle,
+      visible: true,
     },
   ].filter((item) => item.visible);
 
