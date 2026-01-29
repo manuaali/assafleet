@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      custom_compliance_dates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date: string
+          id: string
+          notes: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date: string
+          id?: string
+          notes?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          id?: string
+          notes?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
       inspection_items: {
         Row: {
           created_at: string

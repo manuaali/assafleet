@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminComplianceCard } from "@/components/dashboard/AdminComplianceCard";
+import { InspectionReminderCard } from "@/components/dashboard/InspectionReminderCard";
+import { ComplianceCalendar } from "@/components/dashboard/ComplianceCalendar";
 import { Car, Users, AlertTriangle, TrendingUp, Clock, Gauge } from "lucide-react";
 import { VehicleStatus, vehicleStatusLabels } from "@/types/database";
 
@@ -169,8 +171,14 @@ export default function Dashboard() {
           </Card>
         )}
 
+        {/* Inspection Reminder */}
+        <InspectionReminderCard />
+
         {/* Compliance Card - Monthly Inspections */}
         <AdminComplianceCard />
+
+        {/* Compliance Calendar */}
+        <ComplianceCalendar />
 
         {/* Vehicle Status Summary */}
         <Card>
