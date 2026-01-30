@@ -13,6 +13,7 @@ import LeasingCompanies from "./pages/LeasingCompanies";
 import MyVehicle from "./pages/MyVehicle";
 import VehicleInspection from "./pages/VehicleInspection";
 import Chat from "./pages/Chat";
+import DamageReport from "./pages/DamageReport";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -80,6 +81,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Chat />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/damage-report"
+              element={
+                <ProtectedRoute>
+                  <DamageReport />
                 </ProtectedRoute>
               }
             />

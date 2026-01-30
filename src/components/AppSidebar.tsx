@@ -21,6 +21,7 @@ import { useMileageDueStatus } from "@/hooks/use-mileage-due";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/profile/UserAvatar";
 import { ProfileDialog } from "@/components/profile/ProfileDialog";
+import { Badge } from "@/components/ui/badge";
 import {
   Car,
   LayoutDashboard,
@@ -31,6 +32,7 @@ import {
   Settings,
   ClipboardCheck,
   MessageCircle,
+  AlertTriangle,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -42,6 +44,7 @@ export function AppSidebar() {
   const [hasVehicle, setHasVehicle] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<{ full_name: string | null; avatar_url: string | null } | null>(null);
+  const [pendingDamageReports, setPendingDamageReports] = useState(0);
 
   const isCollapsed = state === "collapsed";
 
@@ -77,6 +80,37 @@ export function AppSidebar() {
       fetchUserData();
     }
   }, [user]);
+
+  // Fetch pending damage reports count for admins
+  useEffect(() => {
+    if (user && isAdmin) {
+      const fetchPendingReports = async () => {
+        const { count } = await supabase
+          .from("damage_reports")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "pending");
+        
+        setPendingDamageReports(count || 0);
+      };
+      fetchPendingReports();
+
+      // Subscribe to realtime updates
+      const channel = supabase
+        .channel("damage-reports-count")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "damage_reports" },
+          () => {
+            fetchPendingReports();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user, isAdmin]);
 
   // Use first vehicle for mileage status indicator (if multiple vehicles, user needs to check the page)
   const { status: mileageDueStatus } = useMileageDueStatus(userVehicleIds[0] || null);
@@ -140,6 +174,13 @@ export function AppSidebar() {
       icon: MessageCircle,
       visible: true,
     },
+    {
+      title: "Vahinkoilmoitus",
+      url: "/damage-report",
+      icon: AlertTriangle,
+      visible: true,
+      badge: isAdmin ? pendingDamageReports : undefined,
+    },
   ].filter((item) => item.visible);
 
   return (
@@ -195,6 +236,11 @@ export function AppSidebar() {
                         )}
                       </div>
                       <span>{item.title}</span>
+                      {item.badge !== undefined && item.badge > 0 && (
+                        <Badge variant="destructive" className="ml-auto h-5 min-w-5 px-1 text-xs">
+                          {item.badge}
+                        </Badge>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
