@@ -18,9 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { VehicleAttachmentsCard } from "@/components/vehicles/VehicleAttachmentsCard";
 import { Phone, Wrench, Snowflake, Car, Calendar, Gauge, User, Building2, FileText, Hash, Euro } from "lucide-react";
 import {
   Vehicle,
@@ -609,6 +611,14 @@ export function VehicleDetailDialog({
                 </>
               )}
             </div>
+          )}
+
+          {/* Vehicle Attachments - Only visible to admins */}
+          {canViewContractDetails && (
+            <>
+              <Separator className="my-4" />
+              <VehicleAttachmentsCard vehicleId={vehicle.id} />
+            </>
           )}
         </div>
 
