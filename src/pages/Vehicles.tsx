@@ -513,7 +513,7 @@ export default function Vehicles() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="responsible_user">Vastuuhenkilö</Label>
+                  <Label htmlFor="responsible_user">Käyttäjä</Label>
                   <Select
                     value={newVehicle.responsible_user_id}
                     onValueChange={(value) =>
@@ -521,9 +521,10 @@ export default function Vehicles() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Valitse vastuuhenkilö" />
+                      <SelectValue placeholder="Valitse käyttäjä" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="verstas">Verstas</SelectItem>
                       {users.map((user) => (
                         <SelectItem key={user.user_id} value={user.user_id}>
                           {user.full_name || user.email}
