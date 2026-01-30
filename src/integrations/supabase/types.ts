@@ -41,6 +41,77 @@ export type Database = {
         }
         Relationships: []
       }
+      damage_reports: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          damage_date: string
+          damage_location: string
+          external_damage_description: string | null
+          id: string
+          license_plate: string
+          own_vehicle_damage_description: string
+          own_vehicle_damage_images: string[] | null
+          personal_injuries: boolean
+          personal_injuries_description: string | null
+          reporter_name: string
+          reporter_phone: string
+          speed_at_incident: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          vehicle_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          damage_date: string
+          damage_location: string
+          external_damage_description?: string | null
+          id?: string
+          license_plate: string
+          own_vehicle_damage_description: string
+          own_vehicle_damage_images?: string[] | null
+          personal_injuries?: boolean
+          personal_injuries_description?: string | null
+          reporter_name: string
+          reporter_phone: string
+          speed_at_incident?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          vehicle_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          damage_date?: string
+          damage_location?: string
+          external_damage_description?: string | null
+          id?: string
+          license_plate?: string
+          own_vehicle_damage_description?: string
+          own_vehicle_damage_images?: string[] | null
+          personal_injuries?: boolean
+          personal_injuries_description?: string | null
+          reporter_name?: string
+          reporter_phone?: string
+          speed_at_incident?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "damage_reports_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       direct_messages: {
         Row: {
           content: string

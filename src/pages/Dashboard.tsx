@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AdminComplianceCard } from "@/components/dashboard/AdminComplianceCard";
 import { InspectionReminderCard } from "@/components/dashboard/InspectionReminderCard";
 import { ComplianceCalendar } from "@/components/dashboard/ComplianceCalendar";
+import { DamageReportsAlert } from "@/components/dashboard/DamageReportsAlert";
 import { Car, Users, AlertTriangle, TrendingUp, Clock, Gauge } from "lucide-react";
 import { VehicleStatus, vehicleStatusLabels } from "@/types/database";
 
@@ -108,6 +109,9 @@ export default function Dashboard() {
             Ajoneuvokaluston tilannekatsaus
           </p>
         </div>
+
+        {/* Damage Reports Alert - shown first if there are pending reports */}
+        <DamageReportsAlert />
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

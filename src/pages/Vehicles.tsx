@@ -38,6 +38,7 @@ import { MileageStatusIndicator } from "@/components/vehicles/MileageStatusIndic
 import { AdminMileageLogDialog } from "@/components/vehicles/AdminMileageLogDialog";
 import { VehicleActionMenu } from "@/components/vehicles/VehicleActionMenu";
 import { VehicleAssignmentHistoryDialog } from "@/components/vehicles/VehicleAssignmentHistoryDialog";
+import { VehicleDamageHistoryDialog } from "@/components/damage/VehicleDamageHistoryDialog";
 import { UserAvatar } from "@/components/profile/UserAvatar";
 import { useAllVehiclesMileageStatus } from "@/hooks/use-mileage-due";
 import { Plus, Search, Car, Gauge } from "lucide-react";
@@ -83,6 +84,7 @@ export default function Vehicles() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+  const [isDamageHistoryDialogOpen, setIsDamageHistoryDialogOpen] = useState(false);
   const [isMileageDialogOpen, setIsMileageDialogOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -716,6 +718,10 @@ export default function Vehicles() {
                               setSelectedVehicle(vehicle);
                               setIsHistoryDialogOpen(true);
                             }}
+                            onShowDamageHistory={() => {
+                              setSelectedVehicle(vehicle);
+                              setIsDamageHistoryDialogOpen(true);
+                            }}
                           >
                             <TableRow className="cursor-pointer hover:bg-muted/50">
                               {rowContent}
@@ -759,6 +765,14 @@ export default function Vehicles() {
         users={users.map(u => ({ user_id: u.user_id, full_name: u.full_name, email: u.email }))}
       />
       
+      {/* Vehicle Damage History Dialog */}
+      <VehicleDamageHistoryDialog
+        vehicleId={selectedVehicle?.id || null}
+        vehicleName={selectedVehicle ? `${selectedVehicle.make} ${selectedVehicle.model}` : ""}
+        licensePlate={selectedVehicle?.license_plate || ""}
+        open={isDamageHistoryDialogOpen}
+        onOpenChange={setIsDamageHistoryDialogOpen}
+      />
       {/* Admin Mileage Log Dialog */}
       {selectedVehicle && selectedVehicle.responsible_user_id && (
         <AdminMileageLogDialog
