@@ -45,8 +45,10 @@ import { Plus, Search, Car, Gauge } from "lucide-react";
 import {
   VehicleStatus,
   FuelType,
+  ContractModel,
   vehicleStatusLabels,
   fuelTypeLabels,
+  contractModelLabels,
   LeasingCompany,
   Profile,
 } from "@/types/database";
@@ -73,6 +75,7 @@ interface Vehicle {
   insurance_company: string | null;
   inspection_due_date: string | null;
   has_kasko: boolean | null;
+  contract_model: ContractModel | null;
   created_at: string;
   updated_at: string;
 }
@@ -105,6 +108,7 @@ export default function Vehicles() {
     fuel_type: "diesel" as FuelType,
     status: "ordered" as VehicleStatus,
     leasing_company_id: "",
+    contract_model: "huoltoleasing" as ContractModel,
     contract_start_date: "",
     contract_end_date: "",
     contract_kilometers: "",
@@ -119,6 +123,9 @@ export default function Vehicles() {
     inspection_due_date: "",
     has_kasko: false,
   });
+
+  // Check if leasing fields should be hidden
+  const isOmaKalusto = newVehicle.contract_model === "oma_kalusto";
 
   useEffect(() => {
     fetchData();
@@ -163,6 +170,7 @@ export default function Vehicles() {
 
     setIsSaving(true);
     try {
+      const isOwn = newVehicle.contract_model === "oma_kalusto";
       const { error } = await supabase.from("vehicles").insert({
         make: newVehicle.make,
         model: newVehicle.model,
@@ -170,14 +178,15 @@ export default function Vehicles() {
         fuel_type: newVehicle.fuel_type,
         status: newVehicle.status,
         leasing_company_id: newVehicle.leasing_company_id || null,
-        contract_start_date: newVehicle.contract_start_date || null,
-        contract_end_date: newVehicle.contract_end_date || null,
-        contract_kilometers: newVehicle.contract_kilometers
+        contract_model: newVehicle.contract_model,
+        contract_start_date: isOwn ? null : (newVehicle.contract_start_date || null),
+        contract_end_date: isOwn ? null : (newVehicle.contract_end_date || null),
+        contract_kilometers: isOwn ? null : (newVehicle.contract_kilometers
           ? parseInt(newVehicle.contract_kilometers)
-          : null,
-        monthly_leasing_cost: newVehicle.monthly_leasing_cost
+          : null),
+        monthly_leasing_cost: isOwn ? null : (newVehicle.monthly_leasing_cost
           ? parseFloat(newVehicle.monthly_leasing_cost)
-          : null,
+          : null),
         vin: newVehicle.vin || null,
         responsible_user_id: newVehicle.responsible_user_id || null,
         notes: newVehicle.notes || null,
@@ -185,7 +194,7 @@ export default function Vehicles() {
         service_location_name: newVehicle.service_location_name || null,
         service_location_phone: newVehicle.service_location_phone || null,
         insurance_company: newVehicle.insurance_company || null,
-        inspection_due_date: newVehicle.inspection_due_date || null,
+        inspection_due_date: isOwn ? null : (newVehicle.inspection_due_date || null),
         has_kasko: newVehicle.has_kasko,
       });
 
@@ -204,6 +213,7 @@ export default function Vehicles() {
         fuel_type: "diesel",
         status: "ordered",
         leasing_company_id: "",
+        contract_model: "huoltoleasing",
         contract_start_date: "",
         contract_end_date: "",
         contract_kilometers: "",
@@ -397,70 +407,95 @@ export default function Vehicles() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="contract_start">Sopimus alkaa</Label>
-                    <Input
-                      id="contract_start"
-                      type="date"
-                      value={newVehicle.contract_start_date}
-                      onChange={(e) =>
-                        setNewVehicle({
-                          ...newVehicle,
-                          contract_start_date: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="contract_end">Sopimus päättyy</Label>
-                    <Input
-                      id="contract_end"
-                      type="date"
-                      value={newVehicle.contract_end_date}
-                      onChange={(e) =>
-                        setNewVehicle({
-                          ...newVehicle,
-                          contract_end_date: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contract_model">Sopimusmalli</Label>
+                  <Select
+                    value={newVehicle.contract_model}
+                    onValueChange={(value: ContractModel) =>
+                      setNewVehicle({ ...newVehicle, contract_model: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(contractModelLabels).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="contract_km">Sopimuskilometrit</Label>
-                    <Input
-                      id="contract_km"
-                      type="number"
-                      placeholder="esim. 120000"
-                      value={newVehicle.contract_kilometers}
-                      onChange={(e) =>
-                        setNewVehicle({
-                          ...newVehicle,
-                          contract_kilometers: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="monthly_leasing_cost">Leasing kulut (kuukaudessa)</Label>
-                    <Input
-                      id="monthly_leasing_cost"
-                      type="number"
-                      step="0.01"
-                      placeholder="esim. 450.00"
-                      value={newVehicle.monthly_leasing_cost}
-                      onChange={(e) =>
-                        setNewVehicle({
-                          ...newVehicle,
-                          monthly_leasing_cost: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
+                {!isOmaKalusto && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="contract_start">Sopimus alkaa</Label>
+                        <Input
+                          id="contract_start"
+                          type="date"
+                          value={newVehicle.contract_start_date}
+                          onChange={(e) =>
+                            setNewVehicle({
+                              ...newVehicle,
+                              contract_start_date: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="contract_end">Sopimus päättyy</Label>
+                        <Input
+                          id="contract_end"
+                          type="date"
+                          value={newVehicle.contract_end_date}
+                          onChange={(e) =>
+                            setNewVehicle({
+                              ...newVehicle,
+                              contract_end_date: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="contract_km">Sopimuskilometrit</Label>
+                        <Input
+                          id="contract_km"
+                          type="number"
+                          placeholder="esim. 120000"
+                          value={newVehicle.contract_kilometers}
+                          onChange={(e) =>
+                            setNewVehicle({
+                              ...newVehicle,
+                              contract_kilometers: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="monthly_leasing_cost">Leasing kulut (kuukaudessa)</Label>
+                        <Input
+                          id="monthly_leasing_cost"
+                          type="number"
+                          step="0.01"
+                          placeholder="esim. 450.00"
+                          value={newVehicle.monthly_leasing_cost}
+                          onChange={(e) =>
+                            setNewVehicle({
+                              ...newVehicle,
+                              monthly_leasing_cost: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="vin">VIN-runkonumero</Label>
@@ -545,7 +580,7 @@ export default function Vehicles() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className={isOmaKalusto ? "" : "grid grid-cols-2 gap-4"}>
                   <div className="space-y-2">
                     <Label htmlFor="insurance_company">Vakuutusyhtiö</Label>
                     <Select
@@ -564,20 +599,22 @@ export default function Vehicles() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="inspection_due_date">Katsastettava viimeistään</Label>
-                    <Input
-                      id="inspection_due_date"
-                      type="date"
-                      value={newVehicle.inspection_due_date}
-                      onChange={(e) =>
-                        setNewVehicle({
-                          ...newVehicle,
-                          inspection_due_date: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
+                  {!isOmaKalusto && (
+                    <div className="space-y-2">
+                      <Label htmlFor="inspection_due_date">Katsastettava viimeistään</Label>
+                      <Input
+                        id="inspection_due_date"
+                        type="date"
+                        value={newVehicle.inspection_due_date}
+                        onChange={(e) =>
+                          setNewVehicle({
+                            ...newVehicle,
+                            inspection_due_date: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">

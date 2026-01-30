@@ -5,6 +5,8 @@ export type AppRole = "superadmin" | "admin" | "user";
 
 export type VehicleStatus = "ordered" | "active" | "returning" | "returned" | "out_of_use";
 
+export type ContractModel = "huoltoleasing" | "rahoitusleasing" | "oma_kalusto";
+
 export type FuelType = "petrol" | "diesel" | "hybrid" | "electric" | "plugin_hybrid";
 
 export type InspectionStatus = "pending" | "completed" | "overdue";
@@ -58,6 +60,7 @@ export interface Vehicle {
   insurance_company: string | null;
   inspection_due_date: string | null;
   has_kasko: boolean | null;
+  contract_model: ContractModel | null;
   created_at: string;
   updated_at: string;
 }
@@ -122,6 +125,12 @@ export const vehicleStatusLabels: Record<VehicleStatus, string> = {
   returning: "Palautuksessa",
   returned: "Palautettu",
   out_of_use: "Pois käytöstä",
+};
+
+export const contractModelLabels: Record<ContractModel, string> = {
+  huoltoleasing: "Huoltoleasing",
+  rahoitusleasing: "Rahoitusleasing",
+  oma_kalusto: "Oma kalusto",
 };
 
 export const fuelTypeLabels: Record<FuelType, string> = {

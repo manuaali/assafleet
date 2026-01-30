@@ -397,6 +397,7 @@ export type Database = {
         Row: {
           contract_end_date: string | null
           contract_kilometers: number | null
+          contract_model: string | null
           contract_start_date: string | null
           created_at: string
           current_kilometers: number | null
@@ -422,6 +423,7 @@ export type Database = {
         Insert: {
           contract_end_date?: string | null
           contract_kilometers?: number | null
+          contract_model?: string | null
           contract_start_date?: string | null
           created_at?: string
           current_kilometers?: number | null
@@ -447,6 +449,7 @@ export type Database = {
         Update: {
           contract_end_date?: string | null
           contract_kilometers?: number | null
+          contract_model?: string | null
           contract_start_date?: string | null
           created_at?: string
           current_kilometers?: number | null
