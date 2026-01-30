@@ -55,6 +55,9 @@ export interface Vehicle {
   winter_tires_location: string | null;
   service_location_name: string | null;
   service_location_phone: string | null;
+  insurance_company: string | null;
+  inspection_due_date: string | null;
+  has_kasko: boolean | null;
   created_at: string;
   updated_at: string;
 }

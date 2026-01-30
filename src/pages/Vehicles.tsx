@@ -70,6 +70,9 @@ interface Vehicle {
   winter_tires_location: string | null;
   service_location_name: string | null;
   service_location_phone: string | null;
+  insurance_company: string | null;
+  inspection_due_date: string | null;
+  has_kasko: boolean | null;
   created_at: string;
   updated_at: string;
 }
@@ -112,6 +115,9 @@ export default function Vehicles() {
     winter_tires_location: "",
     service_location_name: "",
     service_location_phone: "",
+    insurance_company: "",
+    inspection_due_date: "",
+    has_kasko: false,
   });
 
   useEffect(() => {
@@ -178,6 +184,9 @@ export default function Vehicles() {
         winter_tires_location: newVehicle.winter_tires_location || null,
         service_location_name: newVehicle.service_location_name || null,
         service_location_phone: newVehicle.service_location_phone || null,
+        insurance_company: newVehicle.insurance_company || null,
+        inspection_due_date: newVehicle.inspection_due_date || null,
+        has_kasko: newVehicle.has_kasko,
       });
 
       if (error) throw error;
@@ -205,6 +214,9 @@ export default function Vehicles() {
         service_location_phone: "",
         responsible_user_id: "",
         notes: "",
+        insurance_company: "",
+        inspection_due_date: "",
+        has_kasko: false,
       });
       fetchData();
     } catch (error: any) {
@@ -272,7 +284,7 @@ export default function Vehicles() {
                 Lisää ajoneuvo
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Lisää uusi ajoneuvo</DialogTitle>
                 <DialogDescription>
@@ -364,7 +376,7 @@ export default function Vehicles() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="leasing_company">Leasingyhtiö</Label>
+                    <Label htmlFor="leasing_company">Omistaja</Label>
                     <Select
                       value={newVehicle.leasing_company_id}
                       onValueChange={(value) =>
@@ -372,7 +384,7 @@ export default function Vehicles() {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Valitse leasingyhtiö" />
+                        <SelectValue placeholder="Valitse omistaja" />
                       </SelectTrigger>
                       <SelectContent>
                         {leasingCompanies.map((company) => (
@@ -531,6 +543,59 @@ export default function Vehicles() {
                       }
                     />
                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="insurance_company">Vakuutusyhtiö</Label>
+                    <Select
+                      value={newVehicle.insurance_company}
+                      onValueChange={(value) =>
+                        setNewVehicle({ ...newVehicle, insurance_company: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Valitse vakuutusyhtiö" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Pohjolan vakuutus">Pohjolan vakuutus</SelectItem>
+                        <SelectItem value="Secto automotive">Secto automotive</SelectItem>
+                        <SelectItem value="Drivalia">Drivalia</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="inspection_due_date">Katsastettava viimeistään</Label>
+                    <Input
+                      id="inspection_due_date"
+                      type="date"
+                      value={newVehicle.inspection_due_date}
+                      onChange={(e) =>
+                        setNewVehicle({
+                          ...newVehicle,
+                          inspection_due_date: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="has_kasko">Kasko</Label>
+                  <Select
+                    value={newVehicle.has_kasko ? "yes" : "no"}
+                    onValueChange={(value) =>
+                      setNewVehicle({ ...newVehicle, has_kasko: value === "yes" })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="yes">Kyllä</SelectItem>
+                      <SelectItem value="no">Ei</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <DialogFooter>
