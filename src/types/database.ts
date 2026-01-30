@@ -60,6 +60,7 @@ export interface Vehicle {
   insurance_company: string | null;
   inspection_due_date: string | null;
   has_kasko: boolean | null;
+  windshield_insurance: boolean | null;
   contract_model: ContractModel | null;
   created_at: string;
   updated_at: string;

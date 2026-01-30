@@ -75,6 +75,7 @@ interface Vehicle {
   insurance_company: string | null;
   inspection_due_date: string | null;
   has_kasko: boolean | null;
+  windshield_insurance: boolean | null;
   contract_model: ContractModel | null;
   created_at: string;
   updated_at: string;
@@ -122,6 +123,7 @@ export default function Vehicles() {
     insurance_company: "",
     inspection_due_date: "",
     has_kasko: false,
+    windshield_insurance: false,
   });
 
   // Check if leasing fields should be hidden
@@ -196,6 +198,7 @@ export default function Vehicles() {
         insurance_company: newVehicle.insurance_company || null,
         inspection_due_date: isOwn ? null : (newVehicle.inspection_due_date || null),
         has_kasko: newVehicle.has_kasko,
+        windshield_insurance: newVehicle.windshield_insurance,
       });
 
       if (error) throw error;
@@ -227,6 +230,7 @@ export default function Vehicles() {
         insurance_company: "",
         inspection_due_date: "",
         has_kasko: false,
+        windshield_insurance: false,
       });
       fetchData();
     } catch (error: any) {
@@ -618,22 +622,41 @@ export default function Vehicles() {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="has_kasko">Kasko</Label>
-                  <Select
-                    value={newVehicle.has_kasko ? "yes" : "no"}
-                    onValueChange={(value) =>
-                      setNewVehicle({ ...newVehicle, has_kasko: value === "yes" })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="yes">Kyllä</SelectItem>
-                      <SelectItem value="no">Ei</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="has_kasko">Kasko</Label>
+                    <Select
+                      value={newVehicle.has_kasko ? "yes" : "no"}
+                      onValueChange={(value) =>
+                        setNewVehicle({ ...newVehicle, has_kasko: value === "yes" })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="yes">Kyllä</SelectItem>
+                        <SelectItem value="no">Ei</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="windshield_insurance">Tuulilasivakuutus</Label>
+                    <Select
+                      value={newVehicle.windshield_insurance ? "yes" : "no"}
+                      onValueChange={(value) =>
+                        setNewVehicle({ ...newVehicle, windshield_insurance: value === "yes" })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="yes">Kyllä</SelectItem>
+                        <SelectItem value="no">Ei</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
               <DialogFooter>
