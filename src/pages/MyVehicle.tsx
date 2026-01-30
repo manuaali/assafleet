@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMileageDueStatus, formatDueDateMessage } from "@/hooks/use-mileage-due";
 import { cn } from "@/lib/utils";
+import { ServiceVisitsCard } from "@/components/vehicles/ServiceVisitsCard";
 import {
   Car,
   Fuel,
@@ -396,6 +397,9 @@ function VehicleCard({
           )}
         </CardContent>
       </Card>
+
+      {/* Service Visits Card */}
+      <ServiceVisitsCard vehicleId={vehicle.id} />
     </div>
   );
 }

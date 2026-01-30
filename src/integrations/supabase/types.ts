@@ -290,6 +290,41 @@ export type Database = {
         }
         Relationships: []
       }
+      service_visits: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          user_id: string
+          vehicle_id: string
+          visit_date: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          user_id: string
+          vehicle_id: string
+          visit_date: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          user_id?: string
+          vehicle_id?: string
+          visit_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_visits_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -342,6 +377,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "vehicle_assignment_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_url: string
+          id: string
+          uploaded_by: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_url: string
+          id?: string
+          uploaded_by: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_url?: string
+          id?: string
+          uploaded_by?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_attachments_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
