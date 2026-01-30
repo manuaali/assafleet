@@ -418,6 +418,7 @@ export type Database = {
           status: Database["public"]["Enums"]["vehicle_status"]
           updated_at: string
           vin: string | null
+          windshield_insurance: boolean | null
           winter_tires_location: string | null
         }
         Insert: {
@@ -444,6 +445,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["vehicle_status"]
           updated_at?: string
           vin?: string | null
+          windshield_insurance?: boolean | null
           winter_tires_location?: string | null
         }
         Update: {
@@ -470,6 +472,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["vehicle_status"]
           updated_at?: string
           vin?: string | null
+          windshield_insurance?: boolean | null
           winter_tires_location?: string | null
         }
         Relationships: [
