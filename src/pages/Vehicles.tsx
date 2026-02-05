@@ -4,6 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,8 +48,9 @@ import { VehicleAssignmentHistoryDialog } from "@/components/vehicles/VehicleAss
 import { VehicleDamageHistoryDialog } from "@/components/damage/VehicleDamageHistoryDialog";
 import { UserAvatar } from "@/components/profile/UserAvatar";
 import { useAllVehiclesMileageStatus } from "@/hooks/use-mileage-due";
-import { Plus, Search, Car, Gauge } from "lucide-react";
+import { Plus, Search, Car, Gauge, CalendarIcon } from "lucide-react";
 import { Eye, EyeOff } from "lucide-react";
+import { formatDate, cn } from "@/lib/utils";
 import {
   VehicleStatus,
   FuelType,
@@ -504,31 +511,71 @@ export default function Vehicles() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="contract_start">Sopimus alkaa</Label>
-                        <Input
-                          id="contract_start"
-                          type="date"
-                          value={newVehicle.contract_start_date}
-                          onChange={(e) =>
-                            setNewVehicle({
-                              ...newVehicle,
-                              contract_start_date: e.target.value,
-                            })
-                          }
-                        />
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              id="contract_start"
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !newVehicle.contract_start_date && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {newVehicle.contract_start_date
+                                ? formatDate(newVehicle.contract_start_date)
+                                : "Valitse päivä"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={newVehicle.contract_start_date ? new Date(newVehicle.contract_start_date) : undefined}
+                              onSelect={(date) =>
+                                setNewVehicle({
+                                  ...newVehicle,
+                                  contract_start_date: date ? date.toISOString().split("T")[0] : "",
+                                })
+                              }
+                              initialFocus
+                              className="p-3 pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="contract_end">Sopimus päättyy</Label>
-                        <Input
-                          id="contract_end"
-                          type="date"
-                          value={newVehicle.contract_end_date}
-                          onChange={(e) =>
-                            setNewVehicle({
-                              ...newVehicle,
-                              contract_end_date: e.target.value,
-                            })
-                          }
-                        />
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              id="contract_end"
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !newVehicle.contract_end_date && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {newVehicle.contract_end_date
+                                ? formatDate(newVehicle.contract_end_date)
+                                : "Valitse päivä"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={newVehicle.contract_end_date ? new Date(newVehicle.contract_end_date) : undefined}
+                              onSelect={(date) =>
+                                setNewVehicle({
+                                  ...newVehicle,
+                                  contract_end_date: date ? date.toISOString().split("T")[0] : "",
+                                })
+                              }
+                              initialFocus
+                              className="p-3 pointer-events-auto"
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
 
@@ -674,17 +721,37 @@ export default function Vehicles() {
                   {!isOmaKalusto && (
                     <div className="space-y-2">
                       <Label htmlFor="inspection_due_date">Katsastettava viimeistään</Label>
-                      <Input
-                        id="inspection_due_date"
-                        type="date"
-                        value={newVehicle.inspection_due_date}
-                        onChange={(e) =>
-                          setNewVehicle({
-                            ...newVehicle,
-                            inspection_due_date: e.target.value,
-                          })
-                        }
-                      />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            id="inspection_due_date"
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !newVehicle.inspection_due_date && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {newVehicle.inspection_due_date
+                              ? formatDate(newVehicle.inspection_due_date)
+                              : "Valitse päivä"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={newVehicle.inspection_due_date ? new Date(newVehicle.inspection_due_date) : undefined}
+                            onSelect={(date) =>
+                              setNewVehicle({
+                                ...newVehicle,
+                                inspection_due_date: date ? date.toISOString().split("T")[0] : "",
+                              })
+                            }
+                            initialFocus
+                            className="p-3 pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   )}
                 </div>
