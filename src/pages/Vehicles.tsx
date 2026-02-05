@@ -42,6 +42,7 @@ import { VehicleDamageHistoryDialog } from "@/components/damage/VehicleDamageHis
 import { UserAvatar } from "@/components/profile/UserAvatar";
 import { useAllVehiclesMileageStatus } from "@/hooks/use-mileage-due";
 import { Plus, Search, Car, Gauge } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import {
   VehicleStatus,
   FuelType,
@@ -79,6 +80,7 @@ interface Vehicle {
   contract_model: ContractModel | null;
   created_at: string;
   updated_at: string;
+  hidden_from_admins: boolean;
 }
 
 export default function Vehicles() {
@@ -100,6 +102,32 @@ export default function Vehicles() {
   
   // Get mileage due status for all vehicles
   const { statusMap: mileageStatusMap, loading: mileageStatusLoading } = useAllVehiclesMileageStatus();
+
+  // Toggle visibility of a vehicle for admins (only superadmins can do this)
+  const toggleVehicleVisibility = async (vehicleId: string, currentHidden: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("vehicles")
+        .update({ hidden_from_admins: !currentHidden })
+        .eq("id", vehicleId);
+
+      if (error) throw error;
+
+      toast({
+        title: currentHidden ? "Ajoneuvo näkyvissä admineille" : "Ajoneuvo piilotettu admineilta",
+        description: "Muutos tallennettu.",
+      });
+
+      fetchData();
+    } catch (error: any) {
+      console.error("Error toggling vehicle visibility:", error);
+      toast({
+        variant: "destructive",
+        title: "Virhe",
+        description: "Näkyvyyden muuttaminen epäonnistui.",
+      });
+    }
+  };
 
   // New vehicle form state
   const [newVehicle, setNewVehicle] = useState({
@@ -245,7 +273,16 @@ export default function Vehicles() {
     }
   };
 
-  const filteredVehicles = vehicles.filter((vehicle) => {
+  // Filter vehicles - admins don't see hidden vehicles, superadmins see all
+  const visibleVehicles = vehicles.filter((vehicle) => {
+    // Superadmins see everything
+    if (isSuperAdmin) return true;
+    // Admins don't see hidden vehicles
+    if (isAdmin && vehicle.hidden_from_admins) return false;
+    return true;
+  });
+
+  const filteredVehicles = visibleVehicles.filter((vehicle) => {
     const matchesSearch =
       vehicle.make.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vehicle.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -748,6 +785,7 @@ export default function Vehicles() {
                     {filteredVehicles.map((vehicle) => {
                       const mileageStatus = mileageStatusMap.get(vehicle.id);
                       const hasResponsibleUser = !!vehicle.responsible_user_id;
+                      const isHiddenFromAdmins = vehicle.hidden_from_admins;
                       
                       const rowContent = (
                         <>
@@ -798,6 +836,12 @@ export default function Vehicles() {
                                 status={mileageStatus}
                                 kilometers={vehicle.current_kilometers}
                                 contractKilometers={vehicle.contract_kilometers}
+                                onClick={() => {
+                                  if (mileageStatus && !mileageStatus.hasLoggedThisWeek) {
+                                    setSelectedVehicle(vehicle);
+                                    setIsMileageDialogOpen(true);
+                                  }
+                                }}
                               />
                             ) : (
                               <>
@@ -811,23 +855,7 @@ export default function Vehicles() {
                               </>
                             )}
                           </TableCell>
-                          <TableCell>
-                            {hasResponsibleUser && mileageStatus && !mileageStatus.hasLoggedThisWeek && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedVehicle(vehicle);
-                                  setIsMileageDialogOpen(true);
-                                }}
-                                title="Kirjaa kilometrit käyttäjän puolesta"
-                              >
-                                <Gauge className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </TableCell>
+                          <TableCell></TableCell>
                         </>
                       );
 
@@ -848,8 +876,15 @@ export default function Vehicles() {
                               setSelectedVehicle(vehicle);
                               setIsDamageHistoryDialogOpen(true);
                             }}
+                            isSuperAdmin={isSuperAdmin}
+                            isHiddenFromAdmins={isHiddenFromAdmins}
+                            onToggleVisibility={() => toggleVehicleVisibility(vehicle.id, isHiddenFromAdmins)}
                           >
-                            <TableRow className="cursor-pointer hover:bg-muted/50">
+                            <TableRow 
+                              className={`cursor-pointer hover:bg-muted/50 ${
+                                isHiddenFromAdmins && isSuperAdmin ? "ring-2 ring-inset ring-blue-500/50 bg-blue-50/30 dark:bg-blue-950/20" : ""
+                              }`}
+                            >
                               {rowContent}
                             </TableRow>
                           </VehicleActionMenu>

@@ -85,6 +85,35 @@ serve(async (req) => {
       }
     }
 
+    // For damage-images bucket, verify user has access
+    if (bucket === 'damage-images') {
+      // Create service role client to check access
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+      
+      // Check if user is admin
+      const { data: roleData } = await supabaseAdmin
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      
+      const isAdmin = roleData?.role === 'admin' || roleData?.role === 'superadmin';
+      
+      if (!isAdmin) {
+        // Non-admins can only view images from their own damage reports
+        // Extract user ID from path (format: userId/timestamp-filename)
+        const pathParts = path.split('/');
+        const pathUserId = pathParts[0];
+        
+        if (pathUserId !== user.id) {
+          return new Response(
+            JSON.stringify({ error: 'Access denied to this damage image' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
+
     // Generate signed URL using service role
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     

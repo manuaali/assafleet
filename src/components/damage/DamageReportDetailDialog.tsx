@@ -62,12 +62,26 @@ export function DamageReportDetailDialog({
     const urls: string[] = [];
 
     for (const path of report.own_vehicle_damage_images) {
-      const { data } = await supabase.storage
-        .from("damage-images")
-        .createSignedUrl(path, 3600);
+      try {
+        // Try to get signed URL using edge function for proper access
+        const { data: signedData, error: signedError } = await supabase.functions.invoke('get-signed-url', {
+          body: { bucket: 'damage-images', path }
+        });
 
-      if (data?.signedUrl) {
-        urls.push(data.signedUrl);
+        if (!signedError && signedData?.signedUrl) {
+          urls.push(signedData.signedUrl);
+        } else {
+          // Fallback to direct signed URL (in case edge function isn't available)
+          const { data } = await supabase.storage
+            .from("damage-images")
+            .createSignedUrl(path, 3600);
+
+          if (data?.signedUrl) {
+            urls.push(data.signedUrl);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading image:", path, error);
       }
     }
 
