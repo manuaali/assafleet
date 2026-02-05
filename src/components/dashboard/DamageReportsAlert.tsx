@@ -79,7 +79,7 @@ export function DamageReportsAlert() {
                 {report.damage_location}
               </div>
               <span>
-                {format(new Date(report.damage_date), "d.M.yyyy HH:mm", { locale: fi })}
+                {format(new Date(report.damage_date), "dd/MM/yyyy HH:mm", { locale: fi })}
               </span>
             </div>
           </Link>

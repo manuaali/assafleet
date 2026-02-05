@@ -241,7 +241,7 @@ export function ComplianceCalendar() {
                       <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-start text-left font-normal">
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {newDate ? format(newDate, "d.M.yyyy", { locale: fi }) : "Valitse päivä"}
+                          {newDate ? format(newDate, "dd/MM/yyyy", { locale: fi }) : "Valitse päivä"}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -328,7 +328,7 @@ export function ComplianceCalendar() {
                         ) : (
                           <Gauge className="h-3 w-3 text-warning" />
                         )}
-                        <span>{format(new Date(cd.date), "d.M.yyyy")}</span>
+                        <span>{format(new Date(cd.date), "dd/MM/yyyy")}</span>
                       </div>
                       <Button
                         variant="ghost"

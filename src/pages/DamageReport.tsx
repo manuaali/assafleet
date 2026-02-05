@@ -330,7 +330,7 @@ export default function DamageReport() {
                                 )}
                               >
                                 {field.value ? (
-                                  format(field.value, "d.M.yyyy", { locale: fi })
+                                  format(field.value, "dd/MM/yyyy", { locale: fi })
                                 ) : (
                                   <span>Valitse päivä</span>
                                 )}

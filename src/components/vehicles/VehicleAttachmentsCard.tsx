@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { formatDate } from "@/lib/utils";
 import { FileText, Upload, Trash2, Download, Loader2 } from "lucide-react";
 
 interface VehicleAttachment {
@@ -248,7 +249,7 @@ export function VehicleAttachmentsCard({ vehicleId }: VehicleAttachmentsCardProp
                       {attachment.file_name}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(attachment.created_at).toLocaleDateString("fi-FI")}
+                      {formatDate(attachment.created_at)}
                     </p>
                   </div>
                 </div>

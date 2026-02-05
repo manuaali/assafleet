@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { formatDate } from "@/lib/utils";
 import { Plus, Wrench, Trash2, Calendar } from "lucide-react";
 
 interface ServiceVisit {
@@ -225,7 +226,7 @@ export function ServiceVisitsCard({ vehicleId }: ServiceVisitsCardProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                     <Calendar className="h-3.5 w-3.5" />
-                    {new Date(visit.visit_date).toLocaleDateString("fi-FI")}
+                    {formatDate(visit.visit_date)}
                   </div>
                   <p className="text-sm whitespace-pre-wrap">{visit.description}</p>
                 </div>

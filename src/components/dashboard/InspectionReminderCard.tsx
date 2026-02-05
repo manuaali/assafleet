@@ -47,13 +47,13 @@ export function InspectionReminderCard() {
           <div className="rounded-lg border bg-card p-4">
             <p className="text-sm text-muted-foreground">Tämän kuukauden tarkastuspäivä</p>
             <p className="mt-1 text-lg font-semibold">
-              {format(inspectionStatus.currentMonthDate, "EEEE d.M.yyyy", { locale: fi })}
+              {format(inspectionStatus.currentMonthDate, "EEEE dd/MM/yyyy", { locale: fi })}
             </p>
           </div>
           <div className="rounded-lg border bg-card p-4">
             <p className="text-sm text-muted-foreground">Seuraavan kuukauden tarkastuspäivä</p>
             <p className="mt-1 text-lg font-semibold">
-              {format(inspectionStatus.nextMonthDate, "EEEE d.M.yyyy", { locale: fi })}
+              {format(inspectionStatus.nextMonthDate, "EEEE dd/MM/yyyy", { locale: fi })}
             </p>
           </div>
         </div>

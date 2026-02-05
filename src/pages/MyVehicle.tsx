@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMileageDueStatus, formatDueDateMessage } from "@/hooks/use-mileage-due";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { ServiceVisitsCard } from "@/components/vehicles/ServiceVisitsCard";
 import {
   Car,
@@ -228,7 +228,7 @@ function VehicleCard({
                 <p className="text-sm text-muted-foreground">Sopimus päättyy</p>
                 <p className="font-medium">
                   {vehicle.contract_end_date
-                    ? new Date(vehicle.contract_end_date).toLocaleDateString("fi-FI")
+                    ? formatDate(vehicle.contract_end_date)
                     : "-"}
                 </p>
               </div>
@@ -385,7 +385,7 @@ function VehicleCard({
                     className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2"
                   >
                     <span className="text-sm text-muted-foreground">
-                      {new Date(log.logged_at).toLocaleDateString("fi-FI")}
+                      {formatDate(log.logged_at)}
                     </span>
                     <span className="font-mono text-sm font-medium">
                       {log.kilometers.toLocaleString("fi-FI")} km

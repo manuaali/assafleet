@@ -92,7 +92,7 @@ export function VehicleDamageHistoryDialog({
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">
-                        {format(new Date(report.damage_date), "d.M.yyyy HH:mm", { locale: fi })}
+                        {format(new Date(report.damage_date), "dd/MM/yyyy HH:mm", { locale: fi })}
                       </span>
                       {report.personal_injuries && (
                         <Badge variant="destructive">Henkilövahinkoja</Badge>

@@ -384,7 +384,7 @@ export function AdminInspectionList() {
                   <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
                     <span className="text-sm">Suoritettu</span>
                     <span className="text-sm font-medium">
-                      {format(new Date(selectedInspection.completed_at), "d.M.yyyy 'klo' HH:mm", { locale: fi })}
+                      {format(new Date(selectedInspection.completed_at), "dd/MM/yyyy 'klo' HH:mm", { locale: fi })}
                     </span>
                   </div>
                 )}
