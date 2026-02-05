@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -100,6 +101,12 @@ export default function Vehicles() {
   const { toast } = useToast();
   const { isAdmin, isSuperAdmin } = useAuth();
   
+  // URL params for highlighting
+  const [searchParams, setSearchParams] = useSearchParams();
+  const highlightVehicleId = searchParams.get("highlight");
+  const vehicleRefs = useRef<Map<string, HTMLTableRowElement>>(new Map());
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+
   // Get mileage due status for all vehicles
   const { statusMap: mileageStatusMap, loading: mileageStatusLoading } = useAllVehiclesMileageStatus();
 
@@ -160,6 +167,29 @@ export default function Vehicles() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Handle highlight scroll and animation
+  useEffect(() => {
+    if (highlightVehicleId && !loading) {
+      setHighlightedId(highlightVehicleId);
+      
+      // Clear the URL param after a moment
+      setTimeout(() => {
+        setSearchParams({}, { replace: true });
+      }, 500);
+
+      // Scroll to the vehicle
+      const element = vehicleRefs.current.get(highlightVehicleId);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      // Remove highlight after animation
+      setTimeout(() => {
+        setHighlightedId(null);
+      }, 5000);
+    }
+  }, [highlightVehicleId, loading, setSearchParams]);
 
   const fetchData = async () => {
     try {
@@ -881,8 +911,13 @@ export default function Vehicles() {
                             onToggleVisibility={() => toggleVehicleVisibility(vehicle.id, isHiddenFromAdmins)}
                           >
                             <TableRow 
+                              ref={(el) => {
+                                if (el) vehicleRefs.current.set(vehicle.id, el);
+                              }}
                               className={`cursor-pointer hover:bg-muted/50 ${
                                 isHiddenFromAdmins && isSuperAdmin ? "ring-2 ring-inset ring-blue-500/50 bg-blue-50/30 dark:bg-blue-950/20" : ""
+                              } ${
+                                highlightedId === vehicle.id ? "animate-pulse ring-2 ring-primary bg-primary/10" : ""
                               }`}
                             >
                               {rowContent}
@@ -892,7 +927,13 @@ export default function Vehicles() {
                       }
 
                       return (
-                        <TableRow key={vehicle.id}>
+                        <TableRow 
+                          key={vehicle.id}
+                          ref={(el) => {
+                            if (el) vehicleRefs.current.set(vehicle.id, el);
+                          }}
+                          className={highlightedId === vehicle.id ? "animate-pulse ring-2 ring-primary bg-primary/10" : ""}
+                        >
                           {rowContent}
                         </TableRow>
                       );

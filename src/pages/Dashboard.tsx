@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -23,10 +24,20 @@ interface DashboardStats {
   vehiclesOverMileage: number;
 }
 
+interface VehicleAlert {
+  id: string;
+  make: string;
+  model: string;
+  license_plate: string;
+}
+
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { isAdmin, userRole } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [vehiclesNearingEnd, setVehiclesNearingEnd] = useState<VehicleAlert[]>([]);
+  const [vehiclesOverMileageList, setVehiclesOverMileageList] = useState<VehicleAlert[]>([]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -58,16 +69,30 @@ export default function Dashboard() {
 
       const vehiclesList = vehicles || [];
       
-      const vehiclesNearingContractEnd = vehiclesList.filter((v) => {
+      const nearingEnd = vehiclesList.filter((v) => {
         if (!v.contract_end_date) return false;
         const endDate = new Date(v.contract_end_date);
         return endDate <= threeMonthsFromNow && endDate >= now;
-      }).length;
+      });
 
-      const vehiclesOverMileage = vehiclesList.filter((v) => {
+      const overMileage = vehiclesList.filter((v) => {
         if (!v.contract_kilometers || !v.current_kilometers) return false;
         return v.current_kilometers > v.contract_kilometers;
-      }).length;
+      });
+
+      setVehiclesNearingEnd(nearingEnd.map(v => ({
+        id: v.id,
+        make: v.make,
+        model: v.model,
+        license_plate: v.license_plate
+      })));
+
+      setVehiclesOverMileageList(overMileage.map(v => ({
+        id: v.id,
+        make: v.make,
+        model: v.model,
+        license_plate: v.license_plate
+      })));
 
       setStats({
         totalVehicles: vehiclesList.length,
@@ -76,14 +101,18 @@ export default function Dashboard() {
         returningVehicles: vehiclesList.filter((v) => v.status === "returning").length,
         returnedVehicles: vehiclesList.filter((v) => v.status === "returned").length,
         totalUsers: usersCount || 0,
-        vehiclesNearingContractEnd,
-        vehiclesOverMileage,
+        vehiclesNearingContractEnd: nearingEnd.length,
+        vehiclesOverMileage: overMileage.length,
       });
     } catch (error) {
       console.error("Error fetching stats:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleVehicleClick = (vehicleId: string) => {
+    navigate(`/vehicles?highlight=${vehicleId}`);
   };
 
   if (!isAdmin) {
@@ -154,21 +183,51 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="space-y-2">
               {stats.vehiclesNearingContractEnd > 0 && (
-                <div className="flex items-center justify-between rounded-lg bg-background p-3">
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-4 w-4 text-warning" />
-                    <span>Sopimus päättymässä 3 kk sisällä</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between rounded-lg bg-background p-3">
+                    <div className="flex items-center gap-3">
+                      <Clock className="h-4 w-4 text-warning" />
+                      <span>Sopimus päättymässä 3 kk sisällä</span>
+                    </div>
+                    <Badge variant="secondary">{stats.vehiclesNearingContractEnd} ajoneuvoa</Badge>
                   </div>
-                  <Badge variant="secondary">{stats.vehiclesNearingContractEnd} ajoneuvoa</Badge>
+                  <div className="flex flex-wrap gap-2 px-3 pb-2">
+                    {vehiclesNearingEnd.map((vehicle) => (
+                      <button
+                        key={vehicle.id}
+                        onClick={() => handleVehicleClick(vehicle.id)}
+                        className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted/80 hover:ring-2 hover:ring-primary/50"
+                      >
+                        <Car className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span>{vehicle.make} {vehicle.model}</span>
+                        <span className="text-muted-foreground">({vehicle.license_plate})</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
               {stats.vehiclesOverMileage > 0 && (
-                <div className="flex items-center justify-between rounded-lg bg-background p-3">
-                  <div className="flex items-center gap-3">
-                    <Gauge className="h-4 w-4 text-destructive" />
-                    <span>Sopimuskilometrit ylitetty</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between rounded-lg bg-background p-3">
+                    <div className="flex items-center gap-3">
+                      <Gauge className="h-4 w-4 text-destructive" />
+                      <span>Sopimuskilometrit ylitetty</span>
+                    </div>
+                    <Badge variant="destructive">{stats.vehiclesOverMileage} ajoneuvoa</Badge>
                   </div>
-                  <Badge variant="destructive">{stats.vehiclesOverMileage} ajoneuvoa</Badge>
+                  <div className="flex flex-wrap gap-2 px-3 pb-2">
+                    {vehiclesOverMileageList.map((vehicle) => (
+                      <button
+                        key={vehicle.id}
+                        onClick={() => handleVehicleClick(vehicle.id)}
+                        className="inline-flex items-center gap-1.5 rounded-md bg-destructive/10 px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-destructive/20 hover:ring-2 hover:ring-destructive/50"
+                      >
+                        <Car className="h-3.5 w-3.5 text-destructive" />
+                        <span>{vehicle.make} {vehicle.model}</span>
+                        <span className="text-muted-foreground">({vehicle.license_plate})</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>
