@@ -10,12 +10,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { generateComplianceDates, getFirstWorkingDayOfMonth } from "@/hooks/use-inspection-due";
-import { format, isSameDay, startOfMonth, addMonths, isBefore, isAfter } from "date-fns";
+import { generateComplianceDates } from "@/hooks/use-inspection-due";
+import { format, isSameDay } from "date-fns";
 import { fi } from "date-fns/locale";
-import { CalendarIcon, Plus, ClipboardCheck, Gauge, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { CalendarIcon, Plus, ClipboardCheck, Gauge, Trash2, Users, User } from "lucide-react";
+import { cn, formatDate } from "@/lib/utils";
 
 interface CustomDate {
   id: string;
@@ -23,6 +24,14 @@ interface CustomDate {
   type: "inspection" | "mileage";
   notes: string | null;
   created_at: string;
+  user_id: string | null;
+  user_name?: string;
+}
+
+interface UserProfile {
+  user_id: string;
+  full_name: string | null;
+  email: string;
 }
 
 export function ComplianceCalendar() {
@@ -34,6 +43,9 @@ export function ComplianceCalendar() {
   const [newDateType, setNewDateType] = useState<"inspection" | "mileage">("inspection");
   const [newDate, setNewDate] = useState<Date | undefined>(undefined);
   const [newNotes, setNewNotes] = useState("");
+  const [targetType, setTargetType] = useState<"all" | "single">("all");
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Generate standard compliance dates
@@ -45,23 +57,56 @@ export function ComplianceCalendar() {
   // Fetch custom dates from database
   useEffect(() => {
     fetchCustomDates();
+    if (isSuperAdmin) {
+      fetchUsers();
+    }
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, email")
+        .order("full_name", { ascending: true });
+      
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error) {
+      console.log("Error fetching users:", error);
+    }
+  };
 
   const fetchCustomDates = async () => {
     try {
-      // Using any cast since this table was just created and types haven't regenerated yet
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("custom_compliance_dates")
         .select("*")
         .order("date", { ascending: true });
       
       if (error) {
-        // Table might not exist yet
         console.log("Custom dates table not available:", error.message);
         return;
       }
       
-      setCustomDates((data as CustomDate[]) || []);
+      // Fetch user names for dates with user_id
+      const datesWithUsers = await Promise.all(
+        (data || []).map(async (cd: any) => {
+          if (cd.user_id) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("full_name, email")
+              .eq("user_id", cd.user_id)
+              .single();
+            return {
+              ...cd,
+              user_name: profile?.full_name || profile?.email || "Tuntematon"
+            };
+          }
+          return cd;
+        })
+      );
+      
+      setCustomDates(datesWithUsers as CustomDate[]);
     } catch (error) {
       console.log("Error fetching custom dates:", error);
     }
@@ -77,15 +122,24 @@ export function ComplianceCalendar() {
       return;
     }
 
+    if (targetType === "single" && !selectedUserId) {
+      toast({
+        variant: "destructive",
+        title: "Virhe",
+        description: "Valitse käyttäjä.",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      // Using any cast since this table was just created and types haven't regenerated yet
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("custom_compliance_dates")
         .insert({
           date: format(newDate, "yyyy-MM-dd"),
           type: newDateType,
           notes: newNotes || null,
+          user_id: targetType === "single" ? selectedUserId : null,
         });
 
       if (error) throw error;
@@ -98,6 +152,8 @@ export function ComplianceCalendar() {
       setIsAddDialogOpen(false);
       setNewDate(undefined);
       setNewNotes("");
+      setTargetType("all");
+      setSelectedUserId("");
       fetchCustomDates();
     } catch (error: any) {
       console.error("Error adding custom date:", error);
@@ -113,8 +169,7 @@ export function ComplianceCalendar() {
 
   const handleDeleteCustomDate = async (id: string) => {
     try {
-      // Using any cast since this table was just created and types haven't regenerated yet
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("custom_compliance_dates")
         .delete()
         .eq("id", id);
@@ -163,24 +218,39 @@ export function ComplianceCalendar() {
 
   // Custom day content for the calendar
   const modifiers = useMemo(() => {
+    const customMileageAll = customDates.filter(d => d.type === "mileage" && !d.user_id).map(d => new Date(d.date));
+    const customMileagePersonal = customDates.filter(d => d.type === "mileage" && d.user_id).map(d => new Date(d.date));
+    const customInspectionAll = customDates.filter(d => d.type === "inspection" && !d.user_id).map(d => new Date(d.date));
+    const customInspectionPersonal = customDates.filter(d => d.type === "inspection" && d.user_id).map(d => new Date(d.date));
+    
     return {
       mileage: mileageDates,
       inspection: inspectionDates,
-      customMileage: customDates.filter(d => d.type === "mileage").map(d => new Date(d.date)),
-      customInspection: customDates.filter(d => d.type === "inspection").map(d => new Date(d.date)),
+      customMileageAll,
+      customMileagePersonal,
+      customInspectionAll,
+      customInspectionPersonal,
     };
   }, [mileageDates, inspectionDates, customDates]);
 
   const modifiersStyles = {
     mileage: { backgroundColor: "hsl(var(--warning) / 0.2)" },
     inspection: { backgroundColor: "hsl(var(--primary) / 0.2)" },
-    customMileage: { 
+    customMileageAll: { 
       backgroundColor: "hsl(var(--warning) / 0.4)",
       border: "2px dashed hsl(var(--warning))"
     },
-    customInspection: { 
+    customMileagePersonal: { 
+      backgroundColor: "hsl(var(--warning) / 0.4)",
+      border: "2px solid hsl(var(--warning))"
+    },
+    customInspectionAll: { 
       backgroundColor: "hsl(var(--primary) / 0.4)",
       border: "2px dashed hsl(var(--primary))"
+    },
+    customInspectionPersonal: { 
+      backgroundColor: "hsl(var(--primary) / 0.4)",
+      border: "2px solid hsl(var(--primary))"
     },
   };
 
@@ -263,6 +333,42 @@ export function ComplianceCalendar() {
                       placeholder="esim. Ylimääräinen tarkastus"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label>Kohdistus</Label>
+                    <RadioGroup value={targetType} onValueChange={(v) => setTargetType(v as "all" | "single")}>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="all" id="target-all" />
+                        <Label htmlFor="target-all" className="flex items-center gap-2 cursor-pointer">
+                          <Users className="h-4 w-4" />
+                          Kaikille
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="single" id="target-single" />
+                        <Label htmlFor="target-single" className="flex items-center gap-2 cursor-pointer">
+                          <User className="h-4 w-4" />
+                          Yksittäiselle henkilölle
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                  {targetType === "single" && (
+                    <div className="space-y-2">
+                      <Label>Valitse käyttäjä</Label>
+                      <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Valitse käyttäjä..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background border z-50">
+                          {users.map((user) => (
+                            <SelectItem key={user.user_id} value={user.user_id}>
+                              {user.full_name || user.email}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -303,11 +409,19 @@ export function ComplianceCalendar() {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded border-2 border-dashed border-warning" />
-                  <span>Ylimääräinen kirjaus</span>
+                  <span>Ylimääräinen kirjaus (kaikille)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded border-2 border-dashed border-primary" />
-                  <span>Ylimääräinen tarkastus</span>
+                  <span>Ylimääräinen tarkastus (kaikille)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded border-2 border-solid border-warning" />
+                  <span>Ylimääräinen kirjaus (henkilölle)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded border-2 border-solid border-primary" />
+                  <span>Ylimääräinen tarkastus (henkilölle)</span>
                 </div>
               </div>
             </div>
@@ -328,7 +442,22 @@ export function ComplianceCalendar() {
                         ) : (
                           <Gauge className="h-3 w-3 text-warning" />
                         )}
-                        <span>{format(new Date(cd.date), "dd/MM/yyyy")}</span>
+                        <div className="flex flex-col">
+                          <span>{formatDate(new Date(cd.date))}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {cd.user_id ? (
+                              <span className="flex items-center gap-1">
+                                <User className="h-3 w-3" />
+                                {cd.user_name}
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1">
+                                <Users className="h-3 w-3" />
+                                Kaikille
+                              </span>
+                            )}
+                          </span>
+                        </div>
                       </div>
                       <Button
                         variant="ghost"
