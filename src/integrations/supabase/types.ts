@@ -473,6 +473,7 @@ export type Database = {
           current_kilometers: number | null
           fuel_type: Database["public"]["Enums"]["fuel_type"]
           has_kasko: boolean | null
+          hidden_from_admins: boolean
           id: string
           inspection_due_date: string | null
           insurance_company: string | null
@@ -500,6 +501,7 @@ export type Database = {
           current_kilometers?: number | null
           fuel_type: Database["public"]["Enums"]["fuel_type"]
           has_kasko?: boolean | null
+          hidden_from_admins?: boolean
           id?: string
           inspection_due_date?: string | null
           insurance_company?: string | null
@@ -527,6 +529,7 @@ export type Database = {
           current_kilometers?: number | null
           fuel_type?: Database["public"]["Enums"]["fuel_type"]
           has_kasko?: boolean | null
+          hidden_from_admins?: boolean
           id?: string
           inspection_due_date?: string | null
           insurance_company?: string | null
