@@ -3,6 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { VehicleAttachmentsCard } from "@/components/vehicles/VehicleAttachmentsCard";
-import { Phone, Wrench, Snowflake, Car, Calendar, Gauge, User, Building2, FileText, Hash, Euro } from "lucide-react";
+import { CalendarIcon, Phone, Wrench, Snowflake, Car, Gauge, User, Building2, FileText, Hash, Euro } from "lucide-react";
 import {
   Vehicle,
   VehicleStatus,
@@ -43,7 +49,7 @@ interface VehicleDetailDialogProps {
   onVehicleUpdated: () => void;
 }
 
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 
 export function VehicleDetailDialog({
   vehicle,
@@ -306,25 +312,71 @@ export function VehicleDetailDialog({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-contract-start">Sopimus alkaa</Label>
-                  <Input
-                    id="edit-contract-start"
-                    type="date"
-                    value={editedVehicle.contract_start_date || ""}
-                    onChange={(e) =>
-                      setEditedVehicle({ ...editedVehicle, contract_start_date: e.target.value })
-                    }
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="edit-contract-start"
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !editedVehicle.contract_start_date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {editedVehicle.contract_start_date
+                          ? formatDate(editedVehicle.contract_start_date)
+                          : "Valitse päivä"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={editedVehicle.contract_start_date ? new Date(editedVehicle.contract_start_date) : undefined}
+                        onSelect={(date) =>
+                          setEditedVehicle({
+                            ...editedVehicle,
+                            contract_start_date: date ? date.toISOString().split("T")[0] : null,
+                          })
+                        }
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-contract-end">Sopimus päättyy</Label>
-                  <Input
-                    id="edit-contract-end"
-                    type="date"
-                    value={editedVehicle.contract_end_date || ""}
-                    onChange={(e) =>
-                      setEditedVehicle({ ...editedVehicle, contract_end_date: e.target.value })
-                    }
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="edit-contract-end"
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !editedVehicle.contract_end_date && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {editedVehicle.contract_end_date
+                          ? formatDate(editedVehicle.contract_end_date)
+                          : "Valitse päivä"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={editedVehicle.contract_end_date ? new Date(editedVehicle.contract_end_date) : undefined}
+                        onSelect={(date) =>
+                          setEditedVehicle({
+                            ...editedVehicle,
+                            contract_end_date: date ? date.toISOString().split("T")[0] : null,
+                          })
+                        }
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
 
