@@ -199,7 +199,7 @@ export default function VehicleInspectionPage() {
                 </CardTitle>
                 <CardDescription>
                   {isCompleted
-                    ? `Suoritettu ${format(new Date(currentInspection.completed_at!), "d.M.yyyy 'klo' HH:mm", { locale: fi })}`
+                    ? `Suoritettu ${format(new Date(currentInspection.completed_at!), "dd/MM/yyyy 'klo' HH:mm", { locale: fi })}`
                     : "Kuukausitarkastus tulee suorittaa kerran kuukaudessa"}
                 </CardDescription>
               </CardHeader>
@@ -337,7 +337,7 @@ export default function VehicleInspectionPage() {
                 </CardTitle>
                 <CardDescription>
                   {currentInspection.completed_at
-                    ? `Suoritettu ${format(new Date(currentInspection.completed_at), "d.M.yyyy 'klo' HH:mm", { locale: fi })}`
+                    ? `Suoritettu ${format(new Date(currentInspection.completed_at), "dd/MM/yyyy 'klo' HH:mm", { locale: fi })}`
                     : "Ei suoritettu"}
                 </CardDescription>
               </CardHeader>

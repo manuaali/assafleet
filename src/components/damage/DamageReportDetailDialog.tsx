@@ -149,7 +149,7 @@ export function DamageReportDetailDialog({
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span>
-                  {format(new Date(report.damage_date), "EEEE d.M.yyyy 'klo' HH:mm", { locale: fi })}
+                  {format(new Date(report.damage_date), "EEEE dd/MM/yyyy 'klo' HH:mm", { locale: fi })}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -296,7 +296,7 @@ export function DamageReportDetailDialog({
           {/* Metadata */}
           <div className="text-xs text-muted-foreground flex items-center gap-2">
             <Clock className="h-3 w-3" />
-            Ilmoitus luotu: {format(new Date(report.created_at), "d.M.yyyy HH:mm", { locale: fi })}
+            Ilmoitus luotu: {format(new Date(report.created_at), "dd/MM/yyyy HH:mm", { locale: fi })}
           </div>
         </div>
       </DialogContent>

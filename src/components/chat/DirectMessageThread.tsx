@@ -201,7 +201,7 @@ export function DirectMessageThread({
                           {isOwn ? "Sinä" : partnerName}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {format(new Date(message.created_at), "d.M. HH:mm", {
+                          {format(new Date(message.created_at), "dd/MM HH:mm", {
                             locale: fi,
                           })}
                         </span>

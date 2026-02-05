@@ -199,10 +199,10 @@ export function VehicleAssignmentHistoryDialog({
                     )}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {period.startDate ? format(new Date(period.startDate), "d.M.yyyy", { locale: fi }) : "—"}
+                    {period.startDate ? format(new Date(period.startDate), "dd/MM/yyyy", { locale: fi }) : "—"}
                     {" → "}
                     {period.endDate
-                      ? format(new Date(period.endDate), "d.M.yyyy", { locale: fi })
+                      ? format(new Date(period.endDate), "dd/MM/yyyy", { locale: fi })
                       : "nykyhetkeen"}
                   </div>
                 </div>
@@ -233,7 +233,7 @@ export function VehicleAssignmentHistoryDialog({
                 {logs.map((log) => (
                   <TableRow key={log.id}>
                     <TableCell className="text-sm">
-                      {format(new Date(log.changed_at), "d.M.yyyy HH:mm", {
+                      {format(new Date(log.changed_at), "dd/MM/yyyy HH:mm", {
                         locale: fi,
                       })}
                     </TableCell>

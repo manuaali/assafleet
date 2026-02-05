@@ -25,6 +25,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { formatDate } from "@/lib/utils";
 import { Plus, Building2, Trash2 } from "lucide-react";
 import { LeasingCompany } from "@/types/database";
 
@@ -234,7 +235,7 @@ export default function LeasingCompanies() {
                           {company.contact_info || "-"}
                         </TableCell>
                         <TableCell>
-                          {new Date(company.created_at).toLocaleDateString("fi-FI")}
+                          {formatDate(company.created_at)}
                         </TableCell>
                         <TableCell>
                           <Button

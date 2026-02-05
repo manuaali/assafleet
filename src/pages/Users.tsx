@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
+import { formatDate } from "@/lib/utils";
 import { Search, Users as UsersIcon, Shield, ShieldCheck, User } from "lucide-react";
 import { AppRole, roleLabels } from "@/types/database";
 
@@ -248,7 +249,7 @@ export default function Users() {
                           <TableCell>{user.email}</TableCell>
                           <TableCell>{user.phone || "-"}</TableCell>
                           <TableCell>
-                            {new Date(user.created_at).toLocaleDateString("fi-FI")}
+                            {formatDate(user.created_at)}
                           </TableCell>
                           <TableCell>
                             {isSuperAdmin ? (

@@ -96,7 +96,7 @@ export function AdminDamageReportsList() {
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                {format(new Date(report.damage_date), "d.M.yyyy HH:mm", { locale: fi })}
+                {format(new Date(report.damage_date), "dd/MM/yyyy HH:mm", { locale: fi })}
               </div>
               <div className="flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
@@ -111,7 +111,7 @@ export function AdminDamageReportsList() {
           <div className="flex flex-col items-end gap-2">
             {getStatusBadge(report.status)}
             <span className="text-xs text-muted-foreground">
-              {format(new Date(report.created_at), "d.M.yyyy", { locale: fi })}
+              {format(new Date(report.created_at), "dd/MM/yyyy", { locale: fi })}
             </span>
           </div>
         </div>

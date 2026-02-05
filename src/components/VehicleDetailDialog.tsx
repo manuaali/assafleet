@@ -43,12 +43,7 @@ interface VehicleDetailDialogProps {
   onVehicleUpdated: () => void;
 }
 
-// Format date to dd.mm.yyyy
-const formatDate = (dateString: string | null): string => {
-  if (!dateString) return "-";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("fi-FI");
-};
+import { formatDate } from "@/lib/utils";
 
 export function VehicleDetailDialog({
   vehicle,
