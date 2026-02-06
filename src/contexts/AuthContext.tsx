@@ -8,6 +8,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  roleLoading: boolean;
   userRole: AppRole | null;
   isAdmin: boolean;
   isSuperAdmin: boolean;
@@ -24,22 +25,41 @@ interface ServerRoleResponse {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+async function promiseWithTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error("timeout")), ms);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleLoading, setRoleLoading] = useState(false);
   const [userRole, setUserRole] = useState<AppRole | null>(null);
   const [serverVerifiedAdmin, setServerVerifiedAdmin] = useState(false);
   const [serverVerifiedSuperAdmin, setServerVerifiedSuperAdmin] = useState(false);
 
   // Fetch role from server-side edge function for secure verification
-  const fetchUserRoleFromServer = async (accessToken: string): Promise<ServerRoleResponse | null> => {
+  const fetchUserRoleFromServer = async (
+    accessToken: string
+  ): Promise<ServerRoleResponse | null> => {
     try {
-      const response = await supabase.functions.invoke('get-user-role', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      });
+      const response = await promiseWithTimeout(
+        supabase.functions.invoke("get-user-role", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }),
+        6500
+      );
 
       // Check for HTTP errors (401, 403, etc.) or function errors
       if (response.error) {
@@ -56,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return response.data as ServerRoleResponse;
     } catch (error) {
+      // Includes timeouts and network failures
       console.error("Error in fetchUserRoleFromServer:", error);
       return null;
     }
@@ -67,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUserRole(null);
     setServerVerifiedAdmin(false);
     setServerVerifiedSuperAdmin(false);
+    setRoleLoading(false);
   };
 
   const updateRoleState = (serverRole: ServerRoleResponse | null) => {
@@ -76,65 +98,81 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setServerVerifiedSuperAdmin(serverRole.isSuperAdmin);
     } else {
       // Fallback to basic user role if server verification fails
-      setUserRole('user');
+      setUserRole("user");
       setServerVerifiedAdmin(false);
       setServerVerifiedSuperAdmin(false);
     }
+
+    setRoleLoading(false);
   };
 
   useEffect(() => {
     let isMounted = true;
 
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        if (!isMounted) return;
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      if (!isMounted) return;
 
-        // Handle sign out events
-        if (event === 'SIGNED_OUT' || !newSession) {
-          clearAuthState();
-          setLoading(false);
-          return;
-        }
+      // Handle sign out events
+      if (event === "SIGNED_OUT" || !newSession) {
+        clearAuthState();
+        setLoading(false);
+        return;
+      }
 
-        setSession(newSession);
-        setUser(newSession.user);
-        
-        if (newSession.access_token) {
-          // Defer role fetch to avoid blocking
+      setSession(newSession);
+      setUser(newSession.user);
+
+      // Important: never block app rendering on role verification.
+      setLoading(false);
+
+      if (newSession.access_token) {
+        setRoleLoading(true);
+
+        void (async () => {
           const serverRole = await fetchUserRoleFromServer(newSession.access_token);
           if (isMounted) {
             updateRoleState(serverRole);
           }
-        }
-        
-        if (isMounted) {
-          setLoading(false);
-        }
+        })();
+      } else {
+        updateRoleState(null);
       }
-    );
+    });
 
     // THEN check for existing session
     const initializeAuth = async () => {
       try {
-        const { data: { session: existingSession }, error } = await supabase.auth.getSession();
-        
+        const {
+          data: { session: existingSession },
+          error,
+        } = await supabase.auth.getSession();
+
         if (!isMounted) return;
 
         if (error || !existingSession) {
           clearAuthState();
-          setLoading(false);
           return;
         }
 
         setSession(existingSession);
         setUser(existingSession.user);
-        
+
+        // Allow UI to render immediately when session is present.
+        setLoading(false);
+
         if (existingSession.access_token) {
-          const serverRole = await fetchUserRoleFromServer(existingSession.access_token);
-          if (isMounted) {
-            updateRoleState(serverRole);
-          }
+          setRoleLoading(true);
+          void (async () => {
+            const serverRole = await fetchUserRoleFromServer(existingSession.access_token);
+            if (isMounted) {
+              updateRoleState(serverRole);
+            }
+          })();
+        } else {
+          updateRoleState(null);
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
@@ -158,11 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    setUserRole(null);
-    setServerVerifiedAdmin(false);
-    setServerVerifiedSuperAdmin(false);
+    clearAuthState();
   };
 
   // Use server-verified roles for security
@@ -175,6 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         session,
         loading,
+        roleLoading,
         userRole,
         isAdmin,
         isSuperAdmin,
