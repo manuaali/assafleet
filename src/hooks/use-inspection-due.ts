@@ -1,7 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { startOfMonth, addDays, isWeekend, isSameMonth, differenceInDays, isAfter, isBefore, isSameDay, format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * Get the first working day (Monday-Friday) of a given month
@@ -54,19 +53,21 @@ export interface InspectionDueStatus {
 }
 
 export function useInspectionDueStatus(): InspectionDueStatus {
-  const { user } = useAuth();
   const [hasCompletedThisMonth, setHasCompletedThisMonth] = useState(false);
   const [hasVehicle, setHasVehicle] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkInspectionStatus = async () => {
-      if (!user?.id) {
-        setLoading(false);
-        return;
-      }
-
       try {
+        // Get current user from supabase session directly
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user?.id) {
+          setLoading(false);
+          return;
+        }
+
         // First check if user has a vehicle
         const { data: vehicles, error: vehicleError } = await supabase
           .from("vehicles")
@@ -106,7 +107,7 @@ export function useInspectionDueStatus(): InspectionDueStatus {
     };
 
     checkInspectionStatus();
-  }, [user?.id]);
+  }, []);
 
   return useMemo(() => {
     const now = new Date();
@@ -134,7 +135,9 @@ export function useInspectionDueStatus(): InspectionDueStatus {
     const isDueSoon = hasVehicle && !hasCompletedThisMonth && daysUntilDue <= 3 && daysUntilDue > 0;
     
     let message = "";
-    if (!hasVehicle) {
+    if (loading) {
+      message = "Ladataan...";
+    } else if (!hasVehicle) {
       message = "Ei ajoneuvoa";
     } else if (hasCompletedThisMonth) {
       message = "Tarkastus tehty ✓";
