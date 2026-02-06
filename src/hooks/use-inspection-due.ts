@@ -1,5 +1,7 @@
-import { useMemo } from "react";
-import { startOfMonth, addDays, isWeekend, isSameMonth, differenceInDays, isAfter, isBefore, isSameDay } from "date-fns";
+import { useMemo, useState, useEffect } from "react";
+import { startOfMonth, addDays, isWeekend, isSameMonth, differenceInDays, isAfter, isBefore, isSameDay, format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * Get the first working day (Monday-Friday) of a given month
@@ -43,11 +45,69 @@ export interface InspectionDueStatus {
   isDueTomorrow: boolean;
   // Is due in 3 days or less
   isDueSoon: boolean;
+  // Has user completed this month's inspection
+  hasCompletedThisMonth: boolean;
   // Human-readable message
   message: string;
+  // Is loading
+  loading: boolean;
 }
 
 export function useInspectionDueStatus(): InspectionDueStatus {
+  const { user } = useAuth();
+  const [hasCompletedThisMonth, setHasCompletedThisMonth] = useState(false);
+  const [hasVehicle, setHasVehicle] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkInspectionStatus = async () => {
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // First check if user has a vehicle
+        const { data: vehicles, error: vehicleError } = await supabase
+          .from("vehicles")
+          .select("id")
+          .eq("responsible_user_id", user.id)
+          .eq("status", "active")
+          .limit(1);
+
+        if (vehicleError) throw vehicleError;
+
+        if (!vehicles || vehicles.length === 0) {
+          setHasVehicle(false);
+          setLoading(false);
+          return;
+        }
+
+        setHasVehicle(true);
+        const vehicleId = vehicles[0].id;
+
+        // Check if inspection is completed for this month
+        const currentMonth = format(startOfMonth(new Date()), "yyyy-MM-dd");
+        const { data: inspections, error: inspectionError } = await supabase
+          .from("vehicle_inspections")
+          .select("status")
+          .eq("vehicle_id", vehicleId)
+          .eq("inspection_month", currentMonth)
+          .maybeSingle();
+
+        if (inspectionError) throw inspectionError;
+
+        setHasCompletedThisMonth(inspections?.status === "completed");
+      } catch (error) {
+        console.error("Error checking inspection status:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkInspectionStatus();
+  }, [user?.id]);
+
   return useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -63,13 +123,23 @@ export function useInspectionDueStatus(): InspectionDueStatus {
     }
     
     const daysUntilDue = differenceInDays(targetDate, today);
-    const isDueOrOverdue = isSameDay(today, currentMonthDate) || (isAfter(today, currentMonthDate) && isSameMonth(today, currentMonthDate));
-    const isDueTomorrow = daysUntilDue === 1;
-    const isDueSoon = daysUntilDue <= 3 && daysUntilDue > 0;
+    
+    // Only show as overdue if not completed and past the due date
+    const pastDueDate = isAfter(today, currentMonthDate) && isSameMonth(today, currentMonthDate);
+    const isDueToday = isSameDay(today, currentMonthDate);
+    
+    // If completed this month, not due or overdue
+    const isDueOrOverdue = hasVehicle && !hasCompletedThisMonth && (isDueToday || pastDueDate);
+    const isDueTomorrow = hasVehicle && !hasCompletedThisMonth && daysUntilDue === 1;
+    const isDueSoon = hasVehicle && !hasCompletedThisMonth && daysUntilDue <= 3 && daysUntilDue > 0;
     
     let message = "";
-    if (isDueOrOverdue) {
-      if (isSameDay(today, currentMonthDate)) {
+    if (!hasVehicle) {
+      message = "Ei ajoneuvoa";
+    } else if (hasCompletedThisMonth) {
+      message = "Tarkastus tehty ✓";
+    } else if (isDueOrOverdue) {
+      if (isDueToday) {
         message = "Tarkastuspäivä on tänään!";
       } else {
         message = `Tarkastus myöhässä ${Math.abs(differenceInDays(today, currentMonthDate))} päivää`;
@@ -89,9 +159,11 @@ export function useInspectionDueStatus(): InspectionDueStatus {
       isDueOrOverdue,
       isDueTomorrow,
       isDueSoon,
+      hasCompletedThisMonth,
       message,
+      loading,
     };
-  }, []);
+  }, [hasCompletedThisMonth, hasVehicle, loading]);
 }
 
 /**
