@@ -41,8 +41,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       });
 
+      // Check for HTTP errors (401, 403, etc.) or function errors
       if (response.error) {
         console.error("Error fetching role from server:", response.error);
+        // If token is invalid/expired, return null to trigger graceful fallback
+        return null;
+      }
+
+      // Check if response data indicates an error
+      if (response.data?.error) {
+        console.error("Server returned error:", response.data.error);
         return null;
       }
 
@@ -53,59 +61,97 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const clearAuthState = () => {
+    setUser(null);
+    setSession(null);
+    setUserRole(null);
+    setServerVerifiedAdmin(false);
+    setServerVerifiedSuperAdmin(false);
+  };
+
+  const updateRoleState = (serverRole: ServerRoleResponse | null) => {
+    if (serverRole) {
+      setUserRole(serverRole.role);
+      setServerVerifiedAdmin(serverRole.isAdmin);
+      setServerVerifiedSuperAdmin(serverRole.isSuperAdmin);
+    } else {
+      // Fallback to basic user role if server verification fails
+      setUserRole('user');
+      setServerVerifiedAdmin(false);
+      setServerVerifiedSuperAdmin(false);
+    }
+  };
+
   useEffect(() => {
+    let isMounted = true;
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      async (event, newSession) => {
+        if (!isMounted) return;
+
+        // Handle sign out events
+        if (event === 'SIGNED_OUT' || !newSession) {
+          clearAuthState();
+          setLoading(false);
+          return;
+        }
+
+        setSession(newSession);
+        setUser(newSession.user);
         
-        if (session?.access_token) {
-          // Fetch role from server-side for secure verification
-          setTimeout(async () => {
-            const serverRole = await fetchUserRoleFromServer(session.access_token);
-            if (serverRole) {
-              setUserRole(serverRole.role);
-              setServerVerifiedAdmin(serverRole.isAdmin);
-              setServerVerifiedSuperAdmin(serverRole.isSuperAdmin);
-            } else {
-              setUserRole('user');
-              setServerVerifiedAdmin(false);
-              setServerVerifiedSuperAdmin(false);
-            }
-          }, 0);
-        } else {
-          setUserRole(null);
-          setServerVerifiedAdmin(false);
-          setServerVerifiedSuperAdmin(false);
+        if (newSession.access_token) {
+          // Defer role fetch to avoid blocking
+          const serverRole = await fetchUserRoleFromServer(newSession.access_token);
+          if (isMounted) {
+            updateRoleState(serverRole);
+          }
         }
         
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.access_token) {
-        const serverRole = await fetchUserRoleFromServer(session.access_token);
-        if (serverRole) {
-          setUserRole(serverRole.role);
-          setServerVerifiedAdmin(serverRole.isAdmin);
-          setServerVerifiedSuperAdmin(serverRole.isSuperAdmin);
-        } else {
-          setUserRole('user');
-          setServerVerifiedAdmin(false);
-          setServerVerifiedSuperAdmin(false);
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: existingSession }, error } = await supabase.auth.getSession();
+        
+        if (!isMounted) return;
+
+        if (error || !existingSession) {
+          clearAuthState();
+          setLoading(false);
+          return;
+        }
+
+        setSession(existingSession);
+        setUser(existingSession.user);
+        
+        if (existingSession.access_token) {
+          const serverRole = await fetchUserRoleFromServer(existingSession.access_token);
+          if (isMounted) {
+            updateRoleState(serverRole);
+          }
+        }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+        if (isMounted) {
+          clearAuthState();
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
         }
       }
-      
-      setLoading(false);
-    });
+    };
+
+    initializeAuth();
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
