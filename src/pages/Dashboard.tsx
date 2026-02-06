@@ -131,10 +131,10 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="animate-fade-in space-y-6">
+      <div className="animate-fade-in space-y-4 sm:space-y-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Yleisnäkymä</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Yleisnäkymä</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Ajoneuvokaluston tilannekatsaus
           </p>
         </div>
@@ -142,10 +142,10 @@ export default function Dashboard() {
         {/* Damage Reports Alert - shown first if there are pending reports */}
         <DamageReportsAlert />
 
-        {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Stats Grid - 2 columns on mobile, 4 on desktop */}
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
           <StatsCard
-            title="Ajoneuvoja yhteensä"
+            title="Ajoneuvoja"
             value={stats?.totalVehicles}
             icon={Car}
             loading={loading}
@@ -175,32 +175,31 @@ export default function Dashboard() {
         {/* Alerts */}
         {!loading && stats && (stats.vehiclesNearingContractEnd > 0 || stats.vehiclesOverMileage > 0) && (
           <Card className="border-warning/50 bg-warning/5">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <AlertTriangle className="h-5 w-5 text-warning" />
+            <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-warning" />
                 Huomioitavaa
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-2 sm:space-y-2 px-3 sm:px-6 pb-3 sm:pb-6">
               {stats.vehiclesNearingContractEnd > 0 && (
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between rounded-lg bg-background p-3">
-                    <div className="flex items-center gap-3">
-                      <Clock className="h-4 w-4 text-warning" />
-                      <span>Sopimus päättymässä 3 kk sisällä</span>
+                  <div className="flex items-center justify-between rounded-lg bg-background p-2.5 sm:p-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <Clock className="h-4 w-4 text-warning shrink-0" />
+                      <span className="text-xs sm:text-sm">Sopimus päättymässä 3 kk</span>
                     </div>
-                    <Badge variant="secondary">{stats.vehiclesNearingContractEnd} ajoneuvoa</Badge>
+                    <Badge variant="secondary" className="text-xs">{stats.vehiclesNearingContractEnd}</Badge>
                   </div>
-                  <div className="flex flex-wrap gap-2 px-3 pb-2">
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2 px-2 sm:px-3 pb-2">
                     {vehiclesNearingEnd.map((vehicle) => (
                       <button
                         key={vehicle.id}
                         onClick={() => handleVehicleClick(vehicle.id)}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-muted/80 hover:ring-2 hover:ring-primary/50"
+                        className="inline-flex items-center gap-1 sm:gap-1.5 rounded-md bg-muted px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm font-medium transition-colors hover:bg-muted/80 active:bg-muted/60"
                       >
-                        <Car className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span>{vehicle.make} {vehicle.model}</span>
-                        <span className="text-muted-foreground">({vehicle.license_plate})</span>
+                        <Car className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground" />
+                        <span className="truncate max-w-[100px] sm:max-w-none">{vehicle.make} {vehicle.model}</span>
                       </button>
                     ))}
                   </div>
@@ -208,23 +207,22 @@ export default function Dashboard() {
               )}
               {stats.vehiclesOverMileage > 0 && (
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between rounded-lg bg-background p-3">
-                    <div className="flex items-center gap-3">
-                      <Gauge className="h-4 w-4 text-destructive" />
-                      <span>Sopimuskilometrit ylitetty</span>
+                  <div className="flex items-center justify-between rounded-lg bg-background p-2.5 sm:p-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <Gauge className="h-4 w-4 text-destructive shrink-0" />
+                      <span className="text-xs sm:text-sm">Km ylitetty</span>
                     </div>
-                    <Badge variant="destructive">{stats.vehiclesOverMileage} ajoneuvoa</Badge>
+                    <Badge variant="destructive" className="text-xs">{stats.vehiclesOverMileage}</Badge>
                   </div>
-                  <div className="flex flex-wrap gap-2 px-3 pb-2">
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2 px-2 sm:px-3 pb-2">
                     {vehiclesOverMileageList.map((vehicle) => (
                       <button
                         key={vehicle.id}
                         onClick={() => handleVehicleClick(vehicle.id)}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-destructive/10 px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-destructive/20 hover:ring-2 hover:ring-destructive/50"
+                        className="inline-flex items-center gap-1 sm:gap-1.5 rounded-md bg-destructive/10 px-2 sm:px-2.5 py-1.5 text-xs sm:text-sm font-medium transition-colors hover:bg-destructive/20 active:bg-destructive/30"
                       >
-                        <Car className="h-3.5 w-3.5 text-destructive" />
-                        <span>{vehicle.make} {vehicle.model}</span>
-                        <span className="text-muted-foreground">({vehicle.license_plate})</span>
+                        <Car className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-destructive" />
+                        <span className="truncate max-w-[100px] sm:max-w-none">{vehicle.make} {vehicle.model}</span>
                       </button>
                     ))}
                   </div>
@@ -289,17 +287,17 @@ function StatsCard({ title, value, icon: Icon, loading, variant = "default" }: S
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+      <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+        <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground truncate pr-2">
           {title}
         </CardTitle>
-        <Icon className={`h-4 w-4 ${iconColorClass}`} />
+        <Icon className={`h-4 w-4 shrink-0 ${iconColorClass}`} />
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
         {loading ? (
-          <Skeleton className="h-8 w-16" />
+          <Skeleton className="h-7 sm:h-8 w-12 sm:w-16" />
         ) : (
-          <div className="text-2xl font-bold">{value ?? 0}</div>
+          <div className="text-xl sm:text-2xl font-bold">{value ?? 0}</div>
         )}
       </CardContent>
     </Card>

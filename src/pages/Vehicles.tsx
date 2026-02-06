@@ -359,15 +359,15 @@ export default function Vehicles() {
 
   return (
     <DashboardLayout>
-      <div className="animate-fade-in space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="animate-fade-in space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Ajoneuvot</h1>
-            <p className="text-muted-foreground">Hallinnoi ajoneuvokalustoa</p>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Ajoneuvot</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Hallinnoi ajoneuvokalustoa</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button size="sm" className="self-start sm:self-auto">
                 <Plus className="mr-2 h-4 w-4" />
                 Lisää ajoneuvo
               </Button>
@@ -807,22 +807,22 @@ export default function Vehicles() {
 
         {/* Filters */}
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col gap-4 sm:flex-row">
+          <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Hae merkillä, mallilla tai rekisterinumerolla..."
+                  placeholder="Hae..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 h-11 sm:h-10"
                 />
               </div>
               <Select
                 value={statusFilter}
                 onValueChange={(value) => setStatusFilter(value as VehicleStatus | "all")}
               >
-                <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px] h-11 sm:h-10">
                   <SelectValue placeholder="Suodata tilalla" />
                 </SelectTrigger>
                 <SelectContent>
@@ -838,34 +838,152 @@ export default function Vehicles() {
           </CardContent>
         </Card>
 
-        {/* Vehicles Table */}
+        {/* Vehicles List */}
         <Card>
-          <CardHeader>
-            <CardTitle>Ajoneuvolista</CardTitle>
-            <CardDescription>
+          <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6 pb-2 sm:pb-6">
+            <CardTitle className="text-base sm:text-lg">Ajoneuvolista</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               {filteredVehicles.length} ajoneuvoa
               {statusFilter !== "all" && ` (${vehicleStatusLabels[statusFilter]})`}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
             {loading ? (
               <div className="space-y-3">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-20 sm:h-12 w-full" />
+                <Skeleton className="h-20 sm:h-12 w-full" />
+                <Skeleton className="h-20 sm:h-12 w-full" />
               </div>
             ) : filteredVehicles.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Car className="h-12 w-12 text-muted-foreground/50" />
-                <h3 className="mt-4 text-lg font-semibold">Ei ajoneuvoja</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
+              <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
+                <Car className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/50" />
+                <h3 className="mt-3 sm:mt-4 text-base sm:text-lg font-semibold">Ei ajoneuvoja</h3>
+                <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">
                   {searchQuery || statusFilter !== "all"
                     ? "Yritä muuttaa hakuehtoja"
                     : "Lisää ensimmäinen ajoneuvo aloittaaksesi"}
                 </p>
               </div>
             ) : (
-              <div className="rounded-md border">
+              <>
+                {/* Mobile Card View */}
+                <div className="space-y-3 md:hidden">
+                  {filteredVehicles.map((vehicle) => {
+                    const mileageStatus = mileageStatusMap.get(vehicle.id);
+                    const hasResponsibleUser = !!vehicle.responsible_user_id;
+                    const isHiddenFromAdmins = vehicle.hidden_from_admins;
+                    const showMileageLogAction = hasResponsibleUser && mileageStatus && !mileageStatus.hasLoggedThisWeek;
+
+                    const cardContent = (
+                      <div
+                        className={cn(
+                          "rounded-lg border p-3 bg-card transition-colors",
+                          isHiddenFromAdmins && isSuperAdmin && "ring-2 ring-inset ring-blue-500/50 bg-blue-50/30 dark:bg-blue-950/20",
+                          highlightedId === vehicle.id && "animate-pulse ring-2 ring-primary bg-primary/10"
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 min-w-0 flex-1">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                              <Car className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-medium text-sm truncate">
+                                  {vehicle.make} {vehicle.model}
+                                </span>
+                                <Badge className={cn("text-xs shrink-0", getStatusBadgeClass(vehicle.status))}>
+                                  {vehicleStatusLabels[vehicle.status]}
+                                </Badge>
+                              </div>
+                              <div className="text-xs text-muted-foreground font-mono mt-0.5">
+                                {vehicle.license_plate}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="text-muted-foreground">Vastuuhenkilö:</span>
+                            <div className="mt-0.5">
+                              {vehicle.responsible_user_id ? (
+                                <div className="flex items-center gap-1.5">
+                                  <UserAvatar
+                                    avatarUrl={getUserData(vehicle.responsible_user_id)?.avatar_url}
+                                    fullName={getUserData(vehicle.responsible_user_id)?.full_name}
+                                    email={getUserData(vehicle.responsible_user_id)?.email}
+                                    size="sm"
+                                  />
+                                  <span className="truncate">{getUserName(vehicle.responsible_user_id)}</span>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Kilometrit:</span>
+                            <div className="mt-0.5 font-medium">
+                              {hasResponsibleUser ? (
+                                <MileageStatusIndicator
+                                  status={mileageStatus}
+                                  kilometers={vehicle.current_kilometers}
+                                  contractKilometers={vehicle.contract_kilometers}
+                                  onClick={() => {
+                                    if (mileageStatus && !mileageStatus.hasLoggedThisWeek) {
+                                      setSelectedVehicle(vehicle);
+                                      setIsMileageDialogOpen(true);
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <span>
+                                  {vehicle.current_kilometers?.toLocaleString("fi-FI") || "-"} km
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+
+                    if (isAdmin || isSuperAdmin) {
+                      return (
+                        <VehicleActionMenu
+                          key={vehicle.id}
+                          onShowDetails={() => {
+                            setSelectedVehicle(vehicle);
+                            setIsDetailDialogOpen(true);
+                          }}
+                          onShowHistory={() => {
+                            setSelectedVehicle(vehicle);
+                            setIsHistoryDialogOpen(true);
+                          }}
+                          onShowDamageHistory={() => {
+                            setSelectedVehicle(vehicle);
+                            setIsDamageHistoryDialogOpen(true);
+                          }}
+                          isSuperAdmin={isSuperAdmin}
+                          isHiddenFromAdmins={isHiddenFromAdmins}
+                          onToggleVisibility={() => toggleVehicleVisibility(vehicle.id, isHiddenFromAdmins)}
+                          showMileageLogAction={showMileageLogAction}
+                          onLogMileage={() => {
+                            setSelectedVehicle(vehicle);
+                            setIsMileageDialogOpen(true);
+                          }}
+                        >
+                          {cardContent}
+                        </VehicleActionMenu>
+                      );
+                    }
+
+                    return <div key={vehicle.id}>{cardContent}</div>;
+                  })}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -1019,6 +1137,7 @@ export default function Vehicles() {
                   </TableBody>
                 </Table>
               </div>
+            </>
             )}
           </CardContent>
         </Card>
