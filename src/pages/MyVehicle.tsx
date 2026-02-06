@@ -176,63 +176,63 @@ function VehicleCard({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Vehicle Info Card */}
       <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
-                <Car className="h-7 w-7 text-primary" />
+        <CardHeader className="pb-3 sm:pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                <Car className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
               </div>
-              <div>
-                <CardTitle className="text-xl">
+              <div className="min-w-0 flex-1">
+                <CardTitle className="text-lg sm:text-xl truncate">
                   {vehicle.make} {vehicle.model}
                 </CardTitle>
-                <CardDescription className="mt-1 font-mono text-base">
+                <CardDescription className="mt-0.5 sm:mt-1 font-mono text-sm sm:text-base">
                   {vehicle.license_plate}
                 </CardDescription>
               </div>
             </div>
-            <Badge className={getStatusBadgeClass(vehicle.status as VehicleStatus)}>
+            <Badge className={cn("self-start sm:self-auto", getStatusBadgeClass(vehicle.status as VehicleStatus))}>
               {vehicleStatusLabels[vehicle.status as VehicleStatus]}
             </Badge>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="flex items-center gap-3">
-              <Fuel className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Käyttövoima</p>
-                <p className="font-medium">{fuelTypeLabels[vehicle.fuel_type as FuelType]}</p>
+        <CardContent className="pt-0 sm:pt-0">
+          <div className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-4">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <Fuel className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground">Käyttövoima</p>
+                <p className="text-sm sm:text-base font-medium truncate">{fuelTypeLabels[vehicle.fuel_type as FuelType]}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Building2 className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Leasingyhtiö</p>
-                <p className="font-medium">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground">Leasingyhtiö</p>
+                <p className="text-sm sm:text-base font-medium truncate">
                   {vehicle.leasing_companies?.name || "-"}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Sopimus päättyy</p>
-                <p className="font-medium">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground">Sopimus päättyy</p>
+                <p className="text-sm sm:text-base font-medium">
                   {vehicle.contract_end_date
                     ? formatDate(vehicle.contract_end_date)
                     : "-"}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Gauge className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">Sopimuskilometrit</p>
-                <p className="font-medium">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <Gauge className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-muted-foreground">Sopimuskilometrit</p>
+                <p className="text-sm sm:text-base font-medium">
                   {vehicle.contract_kilometers?.toLocaleString("fi-FI") || "-"} km
                 </p>
               </div>
@@ -244,35 +244,35 @@ function VehicleCard({
       {/* Service and Tires Card */}
       {(vehicle.winter_tires_location || vehicle.service_location_name) && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wrench className="h-5 w-5" />
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Wrench className="h-4 w-4 sm:h-5 sm:w-5" />
               Huolto ja renkaat
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-6 sm:grid-cols-2">
+          <CardContent className="pt-0">
+            <div className="grid gap-4 sm:gap-6 sm:grid-cols-2">
               {vehicle.winter_tires_location && (
-                <div className="flex items-start gap-3">
-                  <Snowflake className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Renkaiden säilytyspaikka</p>
-                    <p className="font-medium">{vehicle.winter_tires_location}</p>
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <Snowflake className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm text-muted-foreground">Renkaiden säilytyspaikka</p>
+                    <p className="text-sm sm:text-base font-medium">{vehicle.winter_tires_location}</p>
                   </div>
                 </div>
               )}
               {vehicle.service_location_name && (
-                <div className="flex items-start gap-3">
-                  <Wrench className="h-5 w-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Huoltopaikka</p>
-                    <p className="font-medium">{vehicle.service_location_name}</p>
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <Wrench className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm text-muted-foreground">Huoltopaikka</p>
+                    <p className="text-sm sm:text-base font-medium">{vehicle.service_location_name}</p>
                     {vehicle.service_location_phone && (
                       <a 
                         href={`tel:${vehicle.service_location_phone}`}
-                        className="mt-1 flex items-center gap-1 text-sm text-primary hover:underline"
+                        className="mt-2 inline-flex items-center gap-2 text-sm text-primary hover:underline bg-primary/10 px-3 py-2 rounded-lg active:bg-primary/20 transition-colors"
                       >
-                        <Phone className="h-3 w-3" />
+                        <Phone className="h-4 w-4" />
                         {vehicle.service_location_phone}
                       </a>
                     )}
@@ -289,30 +289,30 @@ function VehicleCard({
         mileageDueStatus?.isDue && !mileageDueStatus?.hasLoggedThisWeek && "ring-2 ring-warning",
         mileageDueStatus?.isOverdue && "ring-2 ring-destructive"
       )}>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
+        <CardHeader className="pb-3 sm:pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
               Kilometriseuranta
             </CardTitle>
             {mileageDueStatus && (
               <Badge 
                 variant={mileageDueStatus.isOverdue ? "destructive" : mileageDueStatus.isDue ? "warning" : "secondary"}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 self-start sm:self-auto text-xs sm:text-sm"
               >
                 <Clock className="h-3 w-3" />
                 {formatDueDateMessage(mileageDueStatus)}
               </Badge>
             )}
           </div>
-          <CardDescription>
+          <CardDescription className="text-xs sm:text-sm">
             Nykyinen lukema ja ennuste
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Ajettu</span>
+        <CardContent className="space-y-4 sm:space-y-6 pt-0">
+          <div className="space-y-2 sm:space-y-3">
+            <div className="flex items-center justify-between text-sm sm:text-base">
+              <span className="text-muted-foreground">Ajettu</span>
               <span className="font-medium">
                 {vehicle.current_kilometers?.toLocaleString("fi-FI") || 0} /{" "}
                 {vehicle.contract_kilometers?.toLocaleString("fi-FI") || "-"} km
@@ -320,20 +320,20 @@ function VehicleCard({
             </div>
             <Progress
               value={mileageStatus.percentage}
-              className={mileageStatus.isOverLimit ? "bg-destructive/20" : ""}
+              className={cn("h-2 sm:h-2.5", mileageStatus.isOverLimit ? "bg-destructive/20" : "")}
             />
             <div className="flex items-center gap-2">
               {mileageStatus.isOverLimit ? (
                 <>
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                  <span className="text-sm text-destructive">
-                    Sopimuskilometrit ylitetty {Math.abs(mileageStatus.remainingKm).toLocaleString("fi-FI")} km:llä
+                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                  <span className="text-xs sm:text-sm text-destructive">
+                    Ylitetty {Math.abs(mileageStatus.remainingKm).toLocaleString("fi-FI")} km
                   </span>
                 </>
               ) : mileageStatus.remainingKm > 0 ? (
                 <>
-                  <CheckCircle className="h-4 w-4 text-success" />
-                  <span className="text-sm text-muted-foreground">
+                  <CheckCircle className="h-4 w-4 text-success shrink-0" />
+                  <span className="text-xs sm:text-sm text-muted-foreground">
                     Jäljellä {mileageStatus.remainingKm.toLocaleString("fi-FI")} km
                   </span>
                 </>
@@ -342,27 +342,27 @@ function VehicleCard({
 
             {/* Mileage Prediction */}
             {mileagePrediction.hasEnoughData && mileagePrediction.averageKmPerWeek && (
-              <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
-                <h4 className="text-sm font-medium flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-primary" />
+              <div className="rounded-lg border bg-muted/20 p-3 sm:p-4 space-y-2 sm:space-y-3">
+                <h4 className="text-xs sm:text-sm font-medium flex items-center gap-2">
+                  <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                   Kilometriarvio
                 </h4>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <div className="grid gap-2 sm:gap-3 grid-cols-2">
+                  <div className="flex items-start gap-2">
+                    <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs text-muted-foreground">Keskimäärin viikossa</p>
-                      <p className="font-medium">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">Keskim. viikossa</p>
+                      <p className="text-sm sm:text-base font-medium">
                         {mileagePrediction.averageKmPerWeek.toLocaleString("fi-FI")} km
                       </p>
                     </div>
                   </div>
                   {mileagePrediction.predictedEndDate && (
-                    <div className="flex items-center gap-2">
-                      <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-start gap-2">
+                      <CalendarClock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Arvioidut km täyteen</p>
-                        <p className="font-medium">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Km täyteen</p>
+                        <p className="text-sm sm:text-base font-medium">
                           {formatDate(mileagePrediction.predictedEndDate)}
                         </p>
                       </div>
@@ -375,11 +375,11 @@ function VehicleCard({
 
           {/* Mileage Input */}
           <div className={cn(
-            "rounded-lg border bg-muted/30 p-4 transition-all duration-300",
+            "rounded-lg border bg-muted/30 p-3 sm:p-4 transition-all duration-300",
             mileageDueStatus?.isDue && !mileageDueStatus?.hasLoggedThisWeek && "border-warning bg-warning/10",
             mileageDueStatus?.isOverdue && "border-destructive bg-destructive/10"
           )}>
-            <Label htmlFor={`mileage-${vehicle.id}`} className="text-sm font-medium">
+            <Label htmlFor={`mileage-${vehicle.id}`} className="text-xs sm:text-sm font-medium">
               Kirjaa uusi mittarilukema
             </Label>
             <div className="mt-2 flex gap-2">
@@ -387,16 +387,22 @@ function VehicleCard({
                 ref={mileageInputRef}
                 id={`mileage-${vehicle.id}`}
                 type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 placeholder="esim. 45000"
                 value={newMileage}
                 onChange={(e) => setNewMileage(e.target.value)}
                 className={cn(
-                  "flex-1 transition-all duration-300",
+                  "flex-1 text-base sm:text-sm h-12 sm:h-10 transition-all duration-300",
                   shouldBounce && "animate-bounce-once scale-105 ring-2 ring-primary"
                 )}
               />
-              <Button onClick={handleLogMileage} disabled={isSaving}>
-                {isSaving ? "Kirjataan..." : "Kirjaa"}
+              <Button 
+                onClick={handleLogMileage} 
+                disabled={isSaving}
+                className="h-12 sm:h-10 px-4 sm:px-4 text-sm sm:text-sm min-w-[80px]"
+              >
+                {isSaving ? "..." : "Kirjaa"}
               </Button>
             </div>
           </div>
@@ -404,17 +410,17 @@ function VehicleCard({
           {/* Recent Logs */}
           {mileageLogs.length > 0 && (
             <div>
-              <h4 className="mb-3 text-sm font-medium">Viimeisimmät kirjaukset</h4>
-              <div className="space-y-2">
+              <h4 className="mb-2 sm:mb-3 text-xs sm:text-sm font-medium">Viimeisimmät kirjaukset</h4>
+              <div className="space-y-1.5 sm:space-y-2">
                 {mileageLogs.slice(0, 5).map((log) => (
                   <div
                     key={log.id}
-                    className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2"
+                    className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2.5 sm:py-2"
                   >
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-xs sm:text-sm text-muted-foreground">
                       {formatDate(log.logged_at)}
                     </span>
-                    <span className="font-mono text-sm font-medium">
+                    <span className="font-mono text-xs sm:text-sm font-medium">
                       {log.kilometers.toLocaleString("fi-FI")} km
                     </span>
                   </div>

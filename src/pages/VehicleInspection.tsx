@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { InspectionChecklist } from "@/components/inspection/InspectionChecklist";
 import { AdminInspectionList } from "@/components/inspection/AdminInspectionList";
+import { cn } from "@/lib/utils";
 import type {
   Vehicle,
   VehicleInspection as VehicleInspectionType,
@@ -175,19 +176,19 @@ export default function VehicleInspectionPage() {
         {/* Current Month Status */}
         {!showChecklist && !showHistory && (
           <>
-            <Card className={
+            <Card className={cn(
               isCompleted
                 ? "border-success/50 bg-success/5"
                 : needsInspection
                   ? "border-warning/50 bg-warning/5"
                   : ""
-            }>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3">
+            )}>
+              <CardHeader className="pb-2 sm:pb-6 px-3 sm:px-6 pt-3 sm:pt-6">
+                <CardTitle className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg">
                   {isCompleted ? (
-                    <CheckCircle2 className="h-6 w-6 text-success" />
+                    <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
                   ) : (
-                    <ClipboardCheck className="h-6 w-6 text-warning" />
+                    <ClipboardCheck className="h-5 w-5 sm:h-6 sm:w-6 text-warning" />
                   )}
                   <span>
                     {isCompleted
@@ -197,22 +198,22 @@ export default function VehicleInspectionPage() {
                         : "Tarkastus kesken"}
                   </span>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs sm:text-sm">
                   {isCompleted
                     ? `Suoritettu ${format(new Date(currentInspection.completed_at!), "dd/MM/yyyy 'klo' HH:mm", { locale: fi })}`
                     : "Kuukausitarkastus tulee suorittaa kerran kuukaudessa"}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
                 {isCompleted ? (
-                  <div className="space-y-4">
-                    <div className="grid gap-3">
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="grid gap-2 sm:gap-3">
                       {currentInspection?.inspection_items?.map((item) => (
                         <div
                           key={item.id}
-                          className="flex items-center justify-between p-3 rounded-lg bg-background border"
+                          className="flex items-center justify-between p-2.5 sm:p-3 rounded-lg bg-background border"
                         >
-                          <span className="text-sm">{item.item_label}</span>
+                          <span className="text-xs sm:text-sm">{item.item_label}</span>
                           <Badge
                             variant={
                               item.status === "ok"
@@ -221,6 +222,7 @@ export default function VehicleInspectionPage() {
                                   ? "secondary"
                                   : "destructive"
                             }
+                            className="text-xs shrink-0 ml-2"
                           >
                             {inspectionItemStatusLabels[item.status!]}
                           </Badge>
@@ -228,17 +230,17 @@ export default function VehicleInspectionPage() {
                       ))}
                     </div>
                     {currentInspection?.notes && (
-                      <div className="p-3 rounded-lg bg-muted">
-                        <p className="text-sm font-medium mb-1">Huomiot:</p>
-                        <p className="text-sm text-muted-foreground">{currentInspection.notes}</p>
+                      <div className="p-2.5 sm:p-3 rounded-lg bg-muted">
+                        <p className="text-xs sm:text-sm font-medium mb-1">Huomiot:</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">{currentInspection.notes}</p>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-3 text-muted-foreground">
-                      <Calendar className="h-5 w-5" />
-                      <span>
+                  <div className="flex flex-col gap-3 sm:gap-4">
+                    <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground">
+                      <Calendar className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
+                      <span className="text-xs sm:text-sm">
                         {needsInspection
                           ? "Aloita tarkastus painamalla alla olevaa painiketta"
                           : "Jatka keskeneräistä tarkastusta"}
@@ -247,7 +249,7 @@ export default function VehicleInspectionPage() {
                     <Button
                       size="lg"
                       onClick={() => (needsInspection ? startInspection() : setShowChecklist(true))}
-                      className="w-full sm:w-auto"
+                      className="w-full h-12 sm:h-11 text-sm sm:text-base"
                     >
                       <ClipboardCheck className="mr-2 h-5 w-5" />
                       {needsInspection ? "Aloita tarkastus" : "Jatka tarkastusta"}
@@ -260,14 +262,14 @@ export default function VehicleInspectionPage() {
             {/* Past Inspections */}
             {pastInspections.length > 0 && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <History className="h-5 w-5" />
+                <CardHeader className="pb-2 sm:pb-6 px-3 sm:px-6 pt-3 sm:pt-6">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                    <History className="h-4 w-4 sm:h-5 sm:w-5" />
                     Aiemmat tarkastukset
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
+                <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                  <div className="space-y-1.5 sm:space-y-2">
                     {pastInspections.slice(0, 6).map((inspection) => (
                       <button
                         key={inspection.id}
@@ -275,17 +277,18 @@ export default function VehicleInspectionPage() {
                           setCurrentInspection(inspection);
                           setShowHistory(true);
                         }}
-                        className="w-full flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+                        className="w-full flex items-center justify-between p-2.5 sm:p-3 rounded-lg border hover:bg-muted/50 active:bg-muted transition-colors text-left"
                       >
-                        <div className="flex items-center gap-3">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="capitalize">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <span className="capitalize text-xs sm:text-sm">
                             {format(new Date(inspection.inspection_month), "LLLL yyyy", { locale: fi })}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 sm:gap-2">
                           <Badge
                             variant={inspection.status === "completed" ? "default" : "destructive"}
+                            className="text-xs"
                           >
                             {inspectionStatusLabels[inspection.status]}
                           </Badge>
@@ -302,11 +305,11 @@ export default function VehicleInspectionPage() {
 
         {/* Inspection Checklist */}
         {showChecklist && currentInspection && (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <Button
               variant="ghost"
               onClick={() => setShowChecklist(false)}
-              className="mb-2"
+              className="mb-1 sm:mb-2 -ml-1 h-9 text-sm"
             >
               ← Takaisin
             </Button>
@@ -399,10 +402,10 @@ export default function VehicleInspectionPage() {
   if (canViewAll && !vehicle) {
     return (
       <DashboardLayout>
-        <div className="animate-fade-in space-y-6">
+        <div className="animate-fade-in space-y-4 sm:space-y-6">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Kuukausitarkastukset</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Kuukausitarkastukset</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Hallinnoi kaikkien ajoneuvojen tarkastuksia
             </p>
           </div>
@@ -431,31 +434,31 @@ export default function VehicleInspectionPage() {
   if (canViewAll) {
     return (
       <DashboardLayout>
-        <div className="animate-fade-in space-y-6">
+        <div className="animate-fade-in space-y-4 sm:space-y-6">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Kuukausitarkastukset</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Kuukausitarkastukset</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               {format(new Date(), "LLLL yyyy", { locale: fi })}
             </p>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
-              <TabsTrigger value="my-inspection" className="gap-2">
+            <TabsList className="grid w-full grid-cols-2 h-11 sm:w-auto sm:grid-cols-none sm:h-10">
+              <TabsTrigger value="my-inspection" className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
                 <Car className="h-4 w-4" />
-                Oma tarkastus
+                <span className="truncate">Oma tarkastus</span>
               </TabsTrigger>
-              <TabsTrigger value="all-inspections" className="gap-2">
+              <TabsTrigger value="all-inspections" className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
                 <Users className="h-4 w-4" />
-                Kaikki tarkastukset
+                <span className="truncate">Kaikki</span>
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="my-inspection" className="mt-6 space-y-6">
+            <TabsContent value="my-inspection" className="mt-4 sm:mt-6 space-y-4 sm:space-y-6">
               {renderUserInspectionView()}
             </TabsContent>
 
-            <TabsContent value="all-inspections" className="mt-6">
+            <TabsContent value="all-inspections" className="mt-4 sm:mt-6">
               <AdminInspectionList />
             </TabsContent>
           </Tabs>
@@ -467,10 +470,10 @@ export default function VehicleInspectionPage() {
   // Regular user with vehicle
   return (
     <DashboardLayout>
-      <div className="animate-fade-in space-y-6">
+      <div className="animate-fade-in space-y-4 sm:space-y-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Kuukausitarkastus</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Kuukausitarkastus</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             {format(new Date(), "LLLL yyyy", { locale: fi })} - {vehicle.make} {vehicle.model}
           </p>
         </div>

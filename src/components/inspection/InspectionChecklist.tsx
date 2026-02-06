@@ -215,7 +215,7 @@ export function InspectionChecklist({
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {inspectionChecklistItems.map((item) => (
         <Card key={item.key} className={cn(
           "transition-all",
@@ -223,9 +223,9 @@ export function InspectionChecklist({
           items[item.key].status === "minor_issue" && "border-warning/50 bg-warning/5",
           items[item.key].status === "major_issue" && "border-destructive/50 bg-destructive/5"
         )}>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center justify-between">
-              <span>{item.label}</span>
+          <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-sm sm:text-base flex items-center justify-between gap-2">
+              <span className="leading-tight">{item.label}</span>
               {items[item.key].status && (
                 <Badge
                   variant={
@@ -235,15 +235,16 @@ export function InspectionChecklist({
                         ? "secondary"
                         : "destructive"
                   }
+                  className="shrink-0 text-xs"
                 >
                   {inspectionItemStatusLabels[items[item.key].status!]}
                 </Badge>
               )}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Status buttons */}
-            <div className="flex flex-wrap gap-2">
+          <CardContent className="space-y-3 sm:space-y-4 px-3 sm:px-6 pb-3 sm:pb-6">
+            {/* Status buttons - larger touch targets for mobile */}
+            <div className="grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
               {statusButtons.map((btn) => (
                 <Button
                   key={btn.status}
@@ -251,57 +252,58 @@ export function InspectionChecklist({
                   variant={items[item.key].status === btn.status ? "default" : "outline"}
                   size="sm"
                   onClick={() => updateItemStatus(item.key, btn.status)}
-                  className="flex items-center gap-2"
+                  className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 h-14 sm:h-9 px-2 sm:px-3 text-[10px] sm:text-sm"
                 >
-                  <btn.icon className={cn("h-4 w-4", items[item.key].status !== btn.status && btn.color)} />
-                  {btn.label}
+                  <btn.icon className={cn("h-5 w-5 sm:h-4 sm:w-4", items[item.key].status !== btn.status && btn.color)} />
+                  <span className="leading-tight">{btn.label}</span>
                 </Button>
               ))}
             </div>
 
             {/* Notes for issues */}
             {items[item.key].status && items[item.key].status !== "ok" && (
-              <div className="space-y-2">
-                <Label>Huomiot ja puutteet</Label>
+              <div className="space-y-2 sm:space-y-2">
+                <Label className="text-xs sm:text-sm">Huomiot ja puutteet</Label>
                 <Textarea
                   placeholder="Kuvaile havaitut puutteet..."
                   value={items[item.key].notes}
                   onChange={(e) => updateItemNotes(item.key, e.target.value)}
-                  className="min-h-[80px]"
+                  className="min-h-[70px] sm:min-h-[80px] text-sm"
                 />
 
                 {/* Image upload */}
                 <div className="space-y-2">
-                  <Label>Liitä kuvia</Label>
+                  <Label className="text-xs sm:text-sm">Liitä kuvia</Label>
                   <div className="flex flex-wrap gap-2">
                     {items[item.key].imageUrls.map((url, idx) => (
                       <div key={idx} className="relative group">
                         <img
                           src={url}
                           alt={`Kuva ${idx + 1}`}
-                          className="h-20 w-20 object-cover rounded-md border"
+                          className="h-16 w-16 sm:h-20 sm:w-20 object-cover rounded-md border"
                         />
                         <button
                           type="button"
                           onClick={() => removeImage(item.key, idx)}
-                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>
                       </div>
                     ))}
-                    <label className="h-20 w-20 border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-muted/50 transition-colors">
+                    <label className="h-16 w-16 sm:h-20 sm:w-20 border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-muted/50 active:bg-muted transition-colors">
                       {items[item.key].uploading ? (
                         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                       ) : (
                         <>
                           <Camera className="h-5 w-5 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground mt-1">Lisää</span>
+                          <span className="text-[10px] sm:text-xs text-muted-foreground mt-1">Lisää</span>
                         </>
                       )}
                       <Input
                         type="file"
                         accept="image/*"
+                        capture="environment"
                         className="hidden"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
@@ -320,25 +322,26 @@ export function InspectionChecklist({
 
       {/* General notes */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Yleiset huomiot</CardTitle>
+        <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
+          <CardTitle className="text-sm sm:text-base">Yleiset huomiot</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
           <Textarea
             placeholder="Muut huomiot tarkastuksesta..."
             value={generalNotes}
             onChange={(e) => setGeneralNotes(e.target.value)}
-            className="min-h-[100px]"
+            className="min-h-[80px] sm:min-h-[100px] text-sm"
           />
         </CardContent>
       </Card>
 
-      {/* Submit button */}
-      <div className="flex justify-end gap-3 pt-4">
+      {/* Submit button - sticky on mobile for easy access */}
+      <div className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 -mx-3 sm:mx-0 px-3 sm:px-0 py-3 sm:py-4 border-t sm:border-0 sm:static sm:bg-transparent sm:backdrop-blur-none">
         <Button
           onClick={handleSubmit}
           disabled={!allItemsChecked || saving}
           size="lg"
+          className="w-full h-12 sm:h-11 text-sm sm:text-base"
         >
           {saving ? (
             <>
@@ -347,7 +350,7 @@ export function InspectionChecklist({
             </>
           ) : (
             <>
-              <CheckCircle2 className="mr-2 h-4 w-4" />
+              <CheckCircle2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
               Vahvista tarkastus
             </>
           )}
@@ -355,7 +358,7 @@ export function InspectionChecklist({
       </div>
 
       {!allItemsChecked && (
-        <p className="text-sm text-muted-foreground text-center">
+        <p className="text-xs sm:text-sm text-muted-foreground text-center pb-4">
           Tarkasta kaikki {inspectionChecklistItems.length} kohtaa ennen vahvistamista.
           ({inspectionChecklistItems.filter((i) => items[i.key].status !== null).length}/{inspectionChecklistItems.length} tarkastettu)
         </p>
