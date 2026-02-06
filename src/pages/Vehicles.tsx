@@ -958,6 +958,12 @@ export default function Vehicles() {
 
                       // Admin/Superadmin gets dropdown menu on click
                       if (isAdmin || isSuperAdmin) {
+                        // Show mileage log action only when mileage is due or overdue
+                        const showMileageLogAction = 
+                          hasResponsibleUser && 
+                          mileageStatus && 
+                          !mileageStatus.hasLoggedThisWeek;
+
                         return (
                           <VehicleActionMenu
                             key={vehicle.id}
@@ -976,6 +982,11 @@ export default function Vehicles() {
                             isSuperAdmin={isSuperAdmin}
                             isHiddenFromAdmins={isHiddenFromAdmins}
                             onToggleVisibility={() => toggleVehicleVisibility(vehicle.id, isHiddenFromAdmins)}
+                            showMileageLogAction={showMileageLogAction}
+                            onLogMileage={() => {
+                              setSelectedVehicle(vehicle);
+                              setIsMileageDialogOpen(true);
+                            }}
                           >
                             <TableRow 
                               ref={(el) => {

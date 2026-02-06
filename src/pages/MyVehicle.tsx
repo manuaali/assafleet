@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMileageDueStatus, formatDueDateMessage } from "@/hooks/use-mileage-due";
+import { getMileagePredictionFromLogs } from "@/hooks/use-mileage-prediction";
 import { cn, formatDate } from "@/lib/utils";
 import { ServiceVisitsCard } from "@/components/vehicles/ServiceVisitsCard";
 import {
@@ -26,6 +27,8 @@ import {
   Wrench,
   Phone,
   Clock,
+  CalendarClock,
+  Activity,
 } from "lucide-react";
 import {
   Vehicle,
@@ -143,28 +146,14 @@ function VehicleCard({
 
   const calculateMileageStatus = () => {
     if (!vehicle.contract_kilometers || !vehicle.current_kilometers) {
-      return { percentage: 0, isOverLimit: false, remainingKm: 0, projectedEnd: 0 };
+      return { percentage: 0, isOverLimit: false, remainingKm: 0 };
     }
 
     const percentage = (vehicle.current_kilometers / vehicle.contract_kilometers) * 100;
     const isOverLimit = vehicle.current_kilometers > vehicle.contract_kilometers;
     const remainingKm = vehicle.contract_kilometers - vehicle.current_kilometers;
 
-    let projectedEnd = 0;
-    if (vehicle.contract_start_date && mileageLogs.length > 0) {
-      const startDate = new Date(vehicle.contract_start_date);
-      const now = new Date();
-      const daysElapsed = Math.max(1, Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
-      const dailyAverage = vehicle.current_kilometers / daysElapsed;
-      
-      if (vehicle.contract_end_date) {
-        const endDate = new Date(vehicle.contract_end_date);
-        const daysRemaining = Math.max(0, Math.floor((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-        projectedEnd = vehicle.current_kilometers + (dailyAverage * daysRemaining);
-      }
-    }
-
-    return { percentage: Math.min(percentage, 100), isOverLimit, remainingKm, projectedEnd };
+    return { percentage: Math.min(percentage, 100), isOverLimit, remainingKm };
   };
 
   const getStatusBadgeClass = (status: VehicleStatus) => {
@@ -179,6 +168,12 @@ function VehicleCard({
   };
 
   const mileageStatus = calculateMileageStatus();
+  
+  // Calculate mileage prediction
+  const mileagePrediction = getMileagePredictionFromLogs(
+    mileageLogs.map(log => ({ kilometers: log.kilometers, logged_at: log.logged_at })),
+    vehicle.contract_kilometers
+  );
 
   return (
     <div className="space-y-6">
@@ -344,6 +339,38 @@ function VehicleCard({
                 </>
               ) : null}
             </div>
+
+            {/* Mileage Prediction */}
+            {mileagePrediction.hasEnoughData && mileagePrediction.averageKmPerWeek && (
+              <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+                <h4 className="text-sm font-medium flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-primary" />
+                  Kilometriarvio
+                </h4>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Keskimäärin viikossa</p>
+                      <p className="font-medium">
+                        {mileagePrediction.averageKmPerWeek.toLocaleString("fi-FI")} km
+                      </p>
+                    </div>
+                  </div>
+                  {mileagePrediction.predictedEndDate && (
+                    <div className="flex items-center gap-2">
+                      <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Arvioidut km täyteen</p>
+                        <p className="font-medium">
+                          {formatDate(mileagePrediction.predictedEndDate)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Mileage Input */}
