@@ -1,4 +1,4 @@
-import { Car, History, AlertTriangle, Eye, EyeOff } from "lucide-react";
+import { Car, History, AlertTriangle, Eye, EyeOff, Gauge } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +15,8 @@ interface VehicleActionMenuProps {
   isSuperAdmin?: boolean;
   isHiddenFromAdmins?: boolean;
   onToggleVisibility?: () => void;
+  showMileageLogAction?: boolean;
+  onLogMileage?: () => void;
 }
 
 export function VehicleActionMenu({
@@ -25,6 +27,8 @@ export function VehicleActionMenu({
   isSuperAdmin,
   isHiddenFromAdmins,
   onToggleVisibility,
+  showMileageLogAction,
+  onLogMileage,
 }: VehicleActionMenuProps) {
   return (
     <DropdownMenu>
@@ -42,6 +46,15 @@ export function VehicleActionMenu({
           <AlertTriangle className="mr-2 h-4 w-4" />
           Vahinkoilmoitushistoria
         </DropdownMenuItem>
+        {showMileageLogAction && onLogMileage && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onLogMileage} className="text-warning">
+              <Gauge className="mr-2 h-4 w-4" />
+              Kirjaa kilometrit toisen puolesta
+            </DropdownMenuItem>
+          </>
+        )}
         {isSuperAdmin && onToggleVisibility && (
           <>
             <DropdownMenuSeparator />

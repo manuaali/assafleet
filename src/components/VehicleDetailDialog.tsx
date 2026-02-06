@@ -29,7 +29,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { VehicleAttachmentsCard } from "@/components/vehicles/VehicleAttachmentsCard";
-import { CalendarIcon, Phone, Wrench, Snowflake, Car, Gauge, User, Building2, FileText, Hash, Euro } from "lucide-react";
+import { useMileagePrediction } from "@/hooks/use-mileage-prediction";
+import { CalendarIcon, Phone, Wrench, Snowflake, Car, Gauge, User, Building2, FileText, Hash, Euro, TrendingUp, CalendarClock, Activity } from "lucide-react";
 import {
   Vehicle,
   VehicleStatus,
@@ -63,6 +64,12 @@ export function VehicleDetailDialog({
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [editedVehicle, setEditedVehicle] = useState<Partial<Vehicle>>({});
+  
+  // Mileage prediction
+  const { prediction: mileagePrediction } = useMileagePrediction(
+    vehicle?.id,
+    vehicle?.contract_kilometers || null
+  );
 
   useEffect(() => {
     if (vehicle) {
@@ -567,22 +574,56 @@ export function VehicleDetailDialog({
               <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide pt-4">
                 Kilometrit
               </h3>
-              <div className="space-y-2">
-                <Label htmlFor="admin-edit-km" className="flex items-center gap-2">
-                  <Gauge className="h-4 w-4" />
-                  Nykyiset kilometrit
-                </Label>
-                <Input
-                  id="admin-edit-km"
-                  type="number"
-                  value={editedVehicle.current_kilometers ?? ""}
-                  onChange={(e) =>
-                    setEditedVehicle({ 
-                      ...editedVehicle, 
-                      current_kilometers: e.target.value ? parseInt(e.target.value) : 0 
-                    })
-                  }
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="admin-edit-km" className="flex items-center gap-2">
+                    <Gauge className="h-4 w-4" />
+                    Nykyiset kilometrit
+                  </Label>
+                  <Input
+                    id="admin-edit-km"
+                    type="number"
+                    value={editedVehicle.current_kilometers ?? ""}
+                    onChange={(e) =>
+                      setEditedVehicle({ 
+                        ...editedVehicle, 
+                        current_kilometers: e.target.value ? parseInt(e.target.value) : 0 
+                      })
+                    }
+                  />
+                </div>
+                
+                {/* Mileage Prediction */}
+                {mileagePrediction?.hasEnoughData && mileagePrediction.averageKmPerWeek && (
+                  <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+                    <h4 className="text-sm font-medium flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-primary" />
+                      Kilometriarvio
+                    </h4>
+                    <div className="grid gap-3 grid-cols-2">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">Keskimäärin viikossa</p>
+                          <p className="font-medium">
+                            {mileagePrediction.averageKmPerWeek.toLocaleString("fi-FI")} km
+                          </p>
+                        </div>
+                      </div>
+                      {mileagePrediction.predictedEndDate && (
+                        <div className="flex items-center gap-2">
+                          <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-xs text-muted-foreground">Arvioidut km täyteen</p>
+                            <p className="font-medium">
+                              {formatDate(mileagePrediction.predictedEndDate)}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide pt-4">
