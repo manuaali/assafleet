@@ -13,10 +13,12 @@ export function ProtectedRoute({
   requireAdmin = false,
   requireSuperAdmin = false 
 }: ProtectedRouteProps) {
-  const { user, loading, isAdmin, isSuperAdmin } = useAuth();
+  const { user, loading, roleLoading, isAdmin, isSuperAdmin } = useAuth();
   const location = useLocation();
 
-  if (loading) {
+  const shouldWaitForRole = (requireAdmin || requireSuperAdmin) && roleLoading;
+
+  if (loading || shouldWaitForRole) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
