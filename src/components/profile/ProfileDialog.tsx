@@ -13,8 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Camera, User } from "lucide-react";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { Loader2, Camera, User, Bell, BellOff } from "lucide-react";
 
 interface ProfileDialogProps {
   open: boolean;
@@ -31,6 +33,7 @@ interface ProfileData {
 export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isSupported, isSubscribed, isLoading: pushLoading, permission, subscribe, unsubscribe } = usePushNotifications();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(true);
@@ -252,6 +255,48 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
                   disabled={saving}
                 />
               </div>
+
+              {/* Push notifications toggle */}
+              {isSupported && (
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="flex items-center gap-3">
+                    {isSubscribed ? (
+                      <Bell className="h-5 w-5 text-primary" />
+                    ) : (
+                      <BellOff className="h-5 w-5 text-muted-foreground" />
+                    )}
+                    <div>
+                      <p className="text-sm font-medium">Push-ilmoitukset</p>
+                      <p className="text-xs text-muted-foreground">
+                        {permission === "denied"
+                          ? "Ilmoitukset estetty selaimen asetuksissa"
+                          : "Muistutukset kilometrikirjauksista ja tarkastuksista"}
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={isSubscribed}
+                    disabled={pushLoading || permission === "denied"}
+                    onCheckedChange={async (checked) => {
+                      const success = checked ? await subscribe() : await unsubscribe();
+                      if (success) {
+                        toast({
+                          title: checked ? "Ilmoitukset käytössä" : "Ilmoitukset pois käytöstä",
+                          description: checked
+                            ? "Saat nyt muistutuksia puhelimeesi."
+                            : "Et saa enää push-ilmoituksia.",
+                        });
+                      } else if (checked && permission !== "granted") {
+                        toast({
+                          variant: "destructive",
+                          title: "Ilmoituslupa evätty",
+                          description: "Salli ilmoitukset selaimen asetuksista.",
+                        });
+                      }
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}
