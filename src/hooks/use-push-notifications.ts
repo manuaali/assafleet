@@ -9,6 +9,9 @@ declare global {
   }
 }
 
+// VAPID public key (safe to store in frontend code)
+const VAPID_PUBLIC_KEY = "BMLCoBu5KY9FsxJKI8GXIHvT8N9XHrOwLqaONKbtg_1DL_DCmBZk4xKgPDS4i9QIa0577Pl2L6IiMDGGwiwZ39k";
+
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -84,7 +87,7 @@ export function usePushNotifications() {
       }
 
       // Get VAPID public key
-      const vapidKey = localStorage.getItem("vapid_public_key");
+      const vapidKey = VAPID_PUBLIC_KEY;
       if (!vapidKey) {
         console.error("VAPID public key not configured");
         return false;
