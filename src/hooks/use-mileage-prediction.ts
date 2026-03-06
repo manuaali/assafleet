@@ -4,75 +4,80 @@ import { differenceInDays, addDays } from "date-fns";
 
 export interface MileagePrediction {
   averageKmPerWeek: number | null;
-  predictedEndDate: Date | null;
-  hasEnoughData: boolean; // At least 5 logs
+  predictedKmAtContractEnd: number | null;
+  predictedKmInOneMonth: number | null;
+  hasEnoughData: boolean;
 }
 
 /**
- * Calculate mileage prediction based on historical logs
- * Requires at least 5 logs for reliable prediction
+ * Calculate mileage prediction based on historical logs.
+ * Predicts: km at contract end date, km in 1 month.
+ * Requires at least 5 logs for reliable prediction.
  */
 export function calculateMileagePrediction(
   logs: { kilometers: number; logged_at: string }[],
-  contractKilometers: number | null
+  contractKilometers: number | null,
+  contractEndDate: string | null
 ): MileagePrediction {
-  // Need at least 5 logs for meaningful prediction
-  if (logs.length < 5 || !contractKilometers) {
+  if (logs.length < 5) {
     return {
       averageKmPerWeek: null,
-      predictedEndDate: null,
-      hasEnoughData: logs.length >= 5,
+      predictedKmAtContractEnd: null,
+      predictedKmInOneMonth: null,
+      hasEnoughData: false,
     };
   }
 
-  // Sort by date ascending
   const sortedLogs = [...logs].sort(
     (a, b) => new Date(a.logged_at).getTime() - new Date(b.logged_at).getTime()
   );
 
-  // Calculate time span and km difference
   const firstLog = sortedLogs[0];
   const lastLog = sortedLogs[sortedLogs.length - 1];
-  
+
   const firstDate = new Date(firstLog.logged_at);
   const lastDate = new Date(lastLog.logged_at);
-  
+
   const daysDiff = differenceInDays(lastDate, firstDate);
   const kmDiff = lastLog.kilometers - firstLog.kilometers;
 
-  // Avoid division by zero
   if (daysDiff <= 0 || kmDiff <= 0) {
     return {
       averageKmPerWeek: null,
-      predictedEndDate: null,
+      predictedKmAtContractEnd: null,
+      predictedKmInOneMonth: null,
       hasEnoughData: true,
     };
   }
 
-  // Calculate average km per day and per week
   const avgKmPerDay = kmDiff / daysDiff;
   const avgKmPerWeek = Math.round(avgKmPerDay * 7);
-
-  // Calculate remaining km
   const currentKm = lastLog.kilometers;
-  const remainingKm = contractKilometers - currentKm;
+  const now = new Date();
 
-  // If already over limit, no prediction needed
-  if (remainingKm <= 0) {
-    return {
-      averageKmPerWeek: avgKmPerWeek,
-      predictedEndDate: null, // Already exceeded
-      hasEnoughData: true,
-    };
+  // Predict km in one month (30 days)
+  const daysUntilOneMonth = 30;
+  const daysSinceLastLog = differenceInDays(now, lastDate);
+  const predictedKmInOneMonth = Math.round(
+    currentKm + avgKmPerDay * (daysSinceLastLog + daysUntilOneMonth)
+  );
+
+  // Predict km at contract end
+  let predictedKmAtContractEnd: number | null = null;
+  if (contractEndDate) {
+    const endDate = new Date(contractEndDate);
+    const daysUntilEnd = differenceInDays(endDate, now);
+    if (daysUntilEnd > 0) {
+      predictedKmAtContractEnd = Math.round(
+        currentKm + avgKmPerDay * (daysSinceLastLog + daysUntilEnd)
+      );
+    }
   }
-
-  // Calculate days until contract limit reached
-  const daysUntilLimit = Math.ceil(remainingKm / avgKmPerDay);
-  const predictedEndDate = addDays(new Date(), daysUntilLimit);
 
   return {
     averageKmPerWeek: avgKmPerWeek,
-    predictedEndDate,
+    predictedKmAtContractEnd,
+    predictedKmInOneMonth,
     hasEnoughData: true,
   };
 }
@@ -82,7 +87,8 @@ export function calculateMileagePrediction(
  */
 export function useMileagePrediction(
   vehicleId: string | null | undefined,
-  contractKilometers: number | null
+  contractKilometers: number | null,
+  contractEndDate: string | null
 ) {
   const [prediction, setPrediction] = useState<MileagePrediction | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,7 +110,7 @@ export function useMileagePrediction(
 
         if (error) throw error;
 
-        const result = calculateMileagePrediction(data || [], contractKilometers);
+        const result = calculateMileagePrediction(data || [], contractKilometers, contractEndDate);
         setPrediction(result);
       } catch (error) {
         console.error("Error fetching mileage logs for prediction:", error);
@@ -115,17 +121,18 @@ export function useMileagePrediction(
     };
 
     fetchLogs();
-  }, [vehicleId, contractKilometers]);
+  }, [vehicleId, contractKilometers, contractEndDate]);
 
   return { prediction, loading };
 }
 
 /**
- * Calculate prediction from existing logs (synchronous version for when logs are already loaded)
+ * Calculate prediction from existing logs (synchronous version)
  */
 export function getMileagePredictionFromLogs(
   logs: { kilometers: number; logged_at: string }[],
-  contractKilometers: number | null
+  contractKilometers: number | null,
+  contractEndDate: string | null
 ): MileagePrediction {
-  return calculateMileagePrediction(logs, contractKilometers);
+  return calculateMileagePrediction(logs, contractKilometers, contractEndDate);
 }

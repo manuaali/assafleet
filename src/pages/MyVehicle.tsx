@@ -172,7 +172,8 @@ function VehicleCard({
   // Calculate mileage prediction
   const mileagePrediction = getMileagePredictionFromLogs(
     mileageLogs.map(log => ({ kilometers: log.kilometers, logged_at: log.logged_at })),
-    vehicle.contract_kilometers
+    vehicle.contract_kilometers,
+    vehicle.contract_end_date
   );
 
   return (
@@ -347,7 +348,7 @@ function VehicleCard({
                   <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                   Kilometriarvio
                 </h4>
-                <div className="grid gap-2 sm:gap-3 grid-cols-2">
+                <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-3">
                   <div className="flex items-start gap-2">
                     <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0 mt-0.5" />
                     <div>
@@ -357,13 +358,24 @@ function VehicleCard({
                       </p>
                     </div>
                   </div>
-                  {mileagePrediction.predictedEndDate && (
+                  {mileagePrediction.predictedKmInOneMonth && (
                     <div className="flex items-start gap-2">
                       <CalendarClock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">Km täyteen</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Arvio kk:n päästä</p>
                         <p className="text-sm sm:text-base font-medium">
-                          {formatDate(mileagePrediction.predictedEndDate)}
+                          {mileagePrediction.predictedKmInOneMonth.toLocaleString("fi-FI")} km
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {mileagePrediction.predictedKmAtContractEnd && (
+                    <div className="flex items-start gap-2">
+                      <Gauge className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Arvio sop. päättyessä</p>
+                        <p className="text-sm sm:text-base font-medium">
+                          {mileagePrediction.predictedKmAtContractEnd.toLocaleString("fi-FI")} km
                         </p>
                       </div>
                     </div>
