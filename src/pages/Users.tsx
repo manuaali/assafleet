@@ -27,6 +27,7 @@ import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
 import { formatDate } from "@/lib/utils";
 import { Search, Users as UsersIcon, Shield, ShieldCheck, User } from "lucide-react";
 import { AppRole, roleLabels } from "@/types/database";
+import { AddUserDialog } from "@/components/users/AddUserDialog";
 
 interface UserWithRole {
   id: string;
@@ -154,9 +155,14 @@ export default function Users() {
   return (
     <DashboardLayout>
       <div className="animate-fade-in space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Käyttäjät</h1>
-          <p className="text-muted-foreground">Hallinnoi käyttäjiä ja heidän roolejaan</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Käyttäjät</h1>
+            <p className="text-muted-foreground">Hallinnoi käyttäjiä ja heidän roolejaan</p>
+          </div>
+          {(isSuperAdmin || users.some(u => u.user_id === currentUser?.id && (u.role === "admin" || u.role === "superadmin"))) && (
+            <AddUserDialog onUserAdded={fetchUsers} />
+          )}
         </div>
 
         {/* Filters */}
