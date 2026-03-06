@@ -68,7 +68,8 @@ export function VehicleDetailDialog({
   // Mileage prediction
   const { prediction: mileagePrediction } = useMileagePrediction(
     vehicle?.id,
-    vehicle?.contract_kilometers || null
+    vehicle?.contract_kilometers || null,
+    vehicle?.contract_end_date || null
   );
 
   useEffect(() => {
@@ -600,23 +601,34 @@ export function VehicleDetailDialog({
                       <Activity className="h-4 w-4 text-primary" />
                       Kilometriarvio
                     </h4>
-                    <div className="grid gap-3 grid-cols-2">
+                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
                       <div className="flex items-center gap-2">
                         <TrendingUp className="h-4 w-4 text-muted-foreground" />
                         <div>
-                          <p className="text-xs text-muted-foreground">Keskimäärin viikossa</p>
+                          <p className="text-xs text-muted-foreground">Keskim. viikossa</p>
                           <p className="font-medium">
                             {mileagePrediction.averageKmPerWeek.toLocaleString("fi-FI")} km
                           </p>
                         </div>
                       </div>
-                      {mileagePrediction.predictedEndDate && (
+                      {mileagePrediction.predictedKmInOneMonth && (
                         <div className="flex items-center gap-2">
                           <CalendarClock className="h-4 w-4 text-muted-foreground" />
                           <div>
-                            <p className="text-xs text-muted-foreground">Arvioidut km täyteen</p>
+                            <p className="text-xs text-muted-foreground">Arvio kk:n päästä</p>
                             <p className="font-medium">
-                              {formatDate(mileagePrediction.predictedEndDate)}
+                              {mileagePrediction.predictedKmInOneMonth.toLocaleString("fi-FI")} km
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {mileagePrediction.predictedKmAtContractEnd && (
+                        <div className="flex items-center gap-2">
+                          <Gauge className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-xs text-muted-foreground">Arvio sop. päättyessä</p>
+                            <p className="font-medium">
+                              {mileagePrediction.predictedKmAtContractEnd.toLocaleString("fi-FI")} km
                             </p>
                           </div>
                         </div>
