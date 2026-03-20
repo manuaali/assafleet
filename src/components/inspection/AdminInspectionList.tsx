@@ -414,16 +414,8 @@ export function AdminInspectionList() {
               <div className="space-y-4 mt-4">
                 <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
                   <span className="text-sm">Tila</span>
-                  <Badge
-                    variant={
-                      selectedInspection.status === "completed"
-                        ? "default"
-                        : selectedInspection.status === "pending"
-                          ? "secondary"
-                          : "destructive"
-                    }
-                  >
-                    {inspectionStatusLabels[selectedInspection.status]}
+                  <Badge variant={getStatusBadgeVariant(selectedInspection.status)}>
+                    {getStatusLabel(selectedInspection.status)}
                   </Badge>
                 </div>
 
