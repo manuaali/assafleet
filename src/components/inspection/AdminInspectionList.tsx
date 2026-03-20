@@ -383,16 +383,8 @@ export function AdminInspectionList() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge
-                        variant={
-                          inspection.status === "completed"
-                            ? "default"
-                            : inspection.status === "pending"
-                              ? "secondary"
-                              : "destructive"
-                        }
-                      >
-                        {inspectionStatusLabels[inspection.status]}
+                      <Badge variant={getStatusBadgeVariant(inspection.status)}>
+                        {getStatusLabel(inspection.status)}
                       </Badge>
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
