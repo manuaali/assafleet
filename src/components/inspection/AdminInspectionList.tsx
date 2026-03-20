@@ -267,7 +267,7 @@ export function AdminInspectionList() {
       </Card>
 
       {/* Stats Summary */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -309,6 +309,21 @@ export function AdminInspectionList() {
                   {inspections.filter((i) => i.status === "overdue").length}
                 </p>
                 <p className="text-sm text-muted-foreground">Myöhässä</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-muted">
+                <XCircle className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">
+                  {inspections.filter((i) => i.status === "not_started").length}
+                </p>
+                <p className="text-sm text-muted-foreground">Ei aloitettu</p>
               </div>
             </div>
           </CardContent>
