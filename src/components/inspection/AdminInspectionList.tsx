@@ -244,6 +244,7 @@ export function AdminInspectionList() {
                 <SelectItem value="completed">Suoritettu</SelectItem>
                 <SelectItem value="pending">Kesken</SelectItem>
                 <SelectItem value="overdue">Myöhässä</SelectItem>
+                <SelectItem value="not_started">Ei aloitettu</SelectItem>
               </SelectContent>
             </Select>
             <Select value={monthFilter} onValueChange={setMonthFilter}>
