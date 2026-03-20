@@ -42,7 +42,7 @@ interface InspectionWithDetails {
   vehicle_id: string;
   user_id: string;
   inspection_month: string;
-  status: "pending" | "completed" | "overdue";
+  status: "pending" | "completed" | "overdue" | "not_started";
   completed_at: string | null;
   notes: string | null;
   created_at: string;
