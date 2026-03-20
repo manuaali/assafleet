@@ -74,16 +74,56 @@ serve(async (req) => {
       },
     });
 
-    // First, clear the responsible_user_id from vehicles
+    // Clean up all user data before deleting auth user
+    // Clear vehicle assignments
     await supabaseAdmin
       .from("vehicles")
       .update({ responsible_user_id: null })
       .eq("responsible_user_id", userId);
 
-    // Delete user roles
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
+    // Delete inspection items for user's inspections
+    const { data: userInspections } = await supabaseAdmin
+      .from("vehicle_inspections")
+      .select("id")
+      .eq("user_id", userId);
+    
+    if (userInspections && userInspections.length > 0) {
+      const inspectionIds = userInspections.map((i) => i.id);
+      await supabaseAdmin
+        .from("inspection_items")
+        .delete()
+        .in("inspection_id", inspectionIds);
+    }
 
-    // Delete profile
+    // Delete from all tables that reference the user
+    await supabaseAdmin.from("vehicle_inspections").delete().eq("user_id", userId);
+    await supabaseAdmin.from("mileage_logs").delete().eq("user_id", userId);
+    await supabaseAdmin.from("damage_reports").delete().eq("user_id", userId);
+    await supabaseAdmin.from("service_visits").delete().eq("user_id", userId);
+    await supabaseAdmin.from("group_messages").delete().eq("user_id", userId);
+    await supabaseAdmin.from("direct_messages").delete().eq("sender_id", userId);
+    await supabaseAdmin.from("direct_messages").delete().eq("recipient_id", userId);
+    await supabaseAdmin.from("push_subscriptions").delete().eq("user_id", userId);
+    await supabaseAdmin.from("vehicle_attachments").delete().eq("uploaded_by", userId);
+    await supabaseAdmin.from("custom_compliance_dates").delete().eq("user_id", userId);
+    await supabaseAdmin.from("custom_compliance_dates").delete().eq("created_by", userId);
+    
+    // Clear assignment log references (nullable columns, set to null instead of delete)
+    await supabaseAdmin
+      .from("vehicle_assignment_logs")
+      .update({ changed_by: null })
+      .eq("changed_by", userId);
+    await supabaseAdmin
+      .from("vehicle_assignment_logs")
+      .update({ previous_user_id: null })
+      .eq("previous_user_id", userId);
+    await supabaseAdmin
+      .from("vehicle_assignment_logs")
+      .update({ new_user_id: null })
+      .eq("new_user_id", userId);
+
+    // Delete user roles and profile
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
     await supabaseAdmin.from("profiles").delete().eq("user_id", userId);
 
     // Delete the user from auth
