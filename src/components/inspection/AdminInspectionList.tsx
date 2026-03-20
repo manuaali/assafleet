@@ -30,6 +30,7 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
+  XCircle,
 } from "lucide-react";
 import { format, subMonths, startOfMonth } from "date-fns";
 import { fi } from "date-fns/locale";
@@ -41,7 +42,7 @@ interface InspectionWithDetails {
   vehicle_id: string;
   user_id: string;
   inspection_month: string;
-  status: "pending" | "completed" | "overdue";
+  status: "pending" | "completed" | "overdue" | "not_started";
   completed_at: string | null;
   notes: string | null;
   created_at: string;
@@ -85,6 +86,15 @@ export function AdminInspectionList() {
       }
       const monthStr = monthDate.toISOString().split("T")[0];
 
+      // Fetch all active vehicles with assigned users
+      const { data: activeVehicles, error: vehiclesError } = await supabase
+        .from("vehicles")
+        .select("id, make, model, license_plate, responsible_user_id")
+        .eq("status", "active")
+        .not("responsible_user_id", "is", null);
+
+      if (vehiclesError) throw vehiclesError;
+
       // Fetch all inspections for the selected month
       const { data: inspectionsData, error: inspectionsError } = await supabase
         .from("vehicle_inspections")
@@ -97,37 +107,49 @@ export function AdminInspectionList() {
 
       if (inspectionsError) throw inspectionsError;
 
-      // Get vehicle details
-      const vehicleIds = [...new Set(inspectionsData?.map((i) => i.vehicle_id) || [])];
-      const { data: vehicles, error: vehiclesError } = await supabase
-        .from("vehicles")
-        .select("id, make, model, license_plate")
-        .in("id", vehicleIds.length > 0 ? vehicleIds : ["00000000-0000-0000-0000-000000000000"]);
+      // Get all relevant user IDs
+      const allUserIds = [
+        ...new Set([
+          ...(activeVehicles?.map((v) => v.responsible_user_id).filter(Boolean) || []),
+          ...(inspectionsData?.map((i) => i.user_id) || []),
+        ]),
+      ];
 
-      if (vehiclesError) throw vehiclesError;
-
-      // Get user profiles
-      const userIds = [...new Set(inspectionsData?.map((i) => i.user_id) || [])];
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("user_id, full_name, email")
-        .in("user_id", userIds.length > 0 ? userIds : ["00000000-0000-0000-0000-000000000000"]);
+        .in("user_id", allUserIds.length > 0 ? allUserIds : ["00000000-0000-0000-0000-000000000000"]);
 
       if (profilesError) throw profilesError;
 
-      const vehicleMap = new Map(vehicles?.map((v) => [v.id, v]));
       const profileMap = new Map(profiles?.map((p) => [p.user_id, p]));
+      const inspectionByVehicle = new Map(inspectionsData?.map((i) => [i.vehicle_id, i]));
 
-      const enrichedInspections: InspectionWithDetails[] = (inspectionsData || []).map((inspection) => ({
-        ...inspection,
-        vehicle: vehicleMap.get(inspection.vehicle_id) || {
-          make: "Tuntematon",
-          model: "",
-          license_plate: "",
-        },
-        profile: profileMap.get(inspection.user_id) || null,
-        inspection_items: inspection.inspection_items || [],
-      }));
+      const enrichedInspections: InspectionWithDetails[] = (activeVehicles || []).map((vehicle) => {
+        const inspection = inspectionByVehicle.get(vehicle.id);
+        if (inspection) {
+          return {
+            ...inspection,
+            vehicle: { make: vehicle.make, model: vehicle.model, license_plate: vehicle.license_plate },
+            profile: profileMap.get(inspection.user_id) || null,
+            inspection_items: inspection.inspection_items || [],
+          };
+        }
+        // No inspection exists — show as "not_started"
+        return {
+          id: `missing-${vehicle.id}`,
+          vehicle_id: vehicle.id,
+          user_id: vehicle.responsible_user_id!,
+          inspection_month: monthStr,
+          status: "not_started" as any,
+          completed_at: null,
+          notes: null,
+          created_at: "",
+          vehicle: { make: vehicle.make, model: vehicle.model, license_plate: vehicle.license_plate },
+          profile: profileMap.get(vehicle.responsible_user_id!) || null,
+          inspection_items: [],
+        };
+      });
 
       setInspections(enrichedInspections);
     } catch (error) {
@@ -167,9 +189,26 @@ export function AdminInspectionList() {
         return <Clock className="h-4 w-4 text-warning" />;
       case "overdue":
         return <AlertTriangle className="h-4 w-4 text-destructive" />;
+      case "not_started":
+        return <XCircle className="h-4 w-4 text-muted-foreground" />;
       default:
         return null;
     }
+  };
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case "completed": return "default" as const;
+      case "pending": return "secondary" as const;
+      case "overdue": return "destructive" as const;
+      case "not_started": return "outline" as const;
+      default: return "secondary" as const;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    if (status === "not_started") return "Ei aloitettu";
+    return inspectionStatusLabels[status as keyof typeof inspectionStatusLabels] || status;
   };
 
   if (loading) {
@@ -205,6 +244,7 @@ export function AdminInspectionList() {
                 <SelectItem value="completed">Suoritettu</SelectItem>
                 <SelectItem value="pending">Kesken</SelectItem>
                 <SelectItem value="overdue">Myöhässä</SelectItem>
+                <SelectItem value="not_started">Ei aloitettu</SelectItem>
               </SelectContent>
             </Select>
             <Select value={monthFilter} onValueChange={setMonthFilter}>
@@ -227,7 +267,7 @@ export function AdminInspectionList() {
       </Card>
 
       {/* Stats Summary */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -269,6 +309,21 @@ export function AdminInspectionList() {
                   {inspections.filter((i) => i.status === "overdue").length}
                 </p>
                 <p className="text-sm text-muted-foreground">Myöhässä</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-muted">
+                <XCircle className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">
+                  {inspections.filter((i) => i.status === "not_started").length}
+                </p>
+                <p className="text-sm text-muted-foreground">Ei aloitettu</p>
               </div>
             </div>
           </CardContent>
@@ -328,16 +383,8 @@ export function AdminInspectionList() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Badge
-                        variant={
-                          inspection.status === "completed"
-                            ? "default"
-                            : inspection.status === "pending"
-                              ? "secondary"
-                              : "destructive"
-                        }
-                      >
-                        {inspectionStatusLabels[inspection.status]}
+                      <Badge variant={getStatusBadgeVariant(inspection.status)}>
+                        {getStatusLabel(inspection.status)}
                       </Badge>
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
@@ -367,16 +414,8 @@ export function AdminInspectionList() {
               <div className="space-y-4 mt-4">
                 <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
                   <span className="text-sm">Tila</span>
-                  <Badge
-                    variant={
-                      selectedInspection.status === "completed"
-                        ? "default"
-                        : selectedInspection.status === "pending"
-                          ? "secondary"
-                          : "destructive"
-                    }
-                  >
-                    {inspectionStatusLabels[selectedInspection.status]}
+                  <Badge variant={getStatusBadgeVariant(selectedInspection.status)}>
+                    {getStatusLabel(selectedInspection.status)}
                   </Badge>
                 </div>
 
