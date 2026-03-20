@@ -30,6 +30,7 @@ import {
   CheckCircle2,
   Clock,
   AlertTriangle,
+  XCircle,
 } from "lucide-react";
 import { format, subMonths, startOfMonth } from "date-fns";
 import { fi } from "date-fns/locale";
