@@ -85,6 +85,15 @@ export function AdminInspectionList() {
       }
       const monthStr = monthDate.toISOString().split("T")[0];
 
+      // Fetch all active vehicles with assigned users
+      const { data: activeVehicles, error: vehiclesError } = await supabase
+        .from("vehicles")
+        .select("id, make, model, license_plate, responsible_user_id")
+        .eq("status", "active")
+        .not("responsible_user_id", "is", null);
+
+      if (vehiclesError) throw vehiclesError;
+
       // Fetch all inspections for the selected month
       const { data: inspectionsData, error: inspectionsError } = await supabase
         .from("vehicle_inspections")
@@ -97,37 +106,49 @@ export function AdminInspectionList() {
 
       if (inspectionsError) throw inspectionsError;
 
-      // Get vehicle details
-      const vehicleIds = [...new Set(inspectionsData?.map((i) => i.vehicle_id) || [])];
-      const { data: vehicles, error: vehiclesError } = await supabase
-        .from("vehicles")
-        .select("id, make, model, license_plate")
-        .in("id", vehicleIds.length > 0 ? vehicleIds : ["00000000-0000-0000-0000-000000000000"]);
+      // Get all relevant user IDs
+      const allUserIds = [
+        ...new Set([
+          ...(activeVehicles?.map((v) => v.responsible_user_id).filter(Boolean) || []),
+          ...(inspectionsData?.map((i) => i.user_id) || []),
+        ]),
+      ];
 
-      if (vehiclesError) throw vehiclesError;
-
-      // Get user profiles
-      const userIds = [...new Set(inspectionsData?.map((i) => i.user_id) || [])];
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("user_id, full_name, email")
-        .in("user_id", userIds.length > 0 ? userIds : ["00000000-0000-0000-0000-000000000000"]);
+        .in("user_id", allUserIds.length > 0 ? allUserIds : ["00000000-0000-0000-0000-000000000000"]);
 
       if (profilesError) throw profilesError;
 
-      const vehicleMap = new Map(vehicles?.map((v) => [v.id, v]));
       const profileMap = new Map(profiles?.map((p) => [p.user_id, p]));
+      const inspectionByVehicle = new Map(inspectionsData?.map((i) => [i.vehicle_id, i]));
 
-      const enrichedInspections: InspectionWithDetails[] = (inspectionsData || []).map((inspection) => ({
-        ...inspection,
-        vehicle: vehicleMap.get(inspection.vehicle_id) || {
-          make: "Tuntematon",
-          model: "",
-          license_plate: "",
-        },
-        profile: profileMap.get(inspection.user_id) || null,
-        inspection_items: inspection.inspection_items || [],
-      }));
+      const enrichedInspections: InspectionWithDetails[] = (activeVehicles || []).map((vehicle) => {
+        const inspection = inspectionByVehicle.get(vehicle.id);
+        if (inspection) {
+          return {
+            ...inspection,
+            vehicle: { make: vehicle.make, model: vehicle.model, license_plate: vehicle.license_plate },
+            profile: profileMap.get(inspection.user_id) || null,
+            inspection_items: inspection.inspection_items || [],
+          };
+        }
+        // No inspection exists — show as "not_started"
+        return {
+          id: `missing-${vehicle.id}`,
+          vehicle_id: vehicle.id,
+          user_id: vehicle.responsible_user_id!,
+          inspection_month: monthStr,
+          status: "not_started" as any,
+          completed_at: null,
+          notes: null,
+          created_at: "",
+          vehicle: { make: vehicle.make, model: vehicle.model, license_plate: vehicle.license_plate },
+          profile: profileMap.get(vehicle.responsible_user_id!) || null,
+          inspection_items: [],
+        };
+      });
 
       setInspections(enrichedInspections);
     } catch (error) {
