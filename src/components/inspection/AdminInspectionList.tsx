@@ -188,9 +188,26 @@ export function AdminInspectionList() {
         return <Clock className="h-4 w-4 text-warning" />;
       case "overdue":
         return <AlertTriangle className="h-4 w-4 text-destructive" />;
+      case "not_started":
+        return <XCircle className="h-4 w-4 text-muted-foreground" />;
       default:
         return null;
     }
+  };
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case "completed": return "default" as const;
+      case "pending": return "secondary" as const;
+      case "overdue": return "destructive" as const;
+      case "not_started": return "outline" as const;
+      default: return "secondary" as const;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    if (status === "not_started") return "Ei aloitettu";
+    return inspectionStatusLabels[status as keyof typeof inspectionStatusLabels] || status;
   };
 
   if (loading) {
