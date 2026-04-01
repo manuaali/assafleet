@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { InspectionChecklist } from "@/components/inspection/InspectionChecklist";
 import { AdminInspectionList } from "@/components/inspection/AdminInspectionList";
+import { InspectionImageGallery } from "@/components/inspection/InspectionImageGallery";
 import { cn } from "@/lib/utils";
 import type {
   Vehicle,
@@ -365,16 +366,8 @@ export default function VehicleInspectionPage() {
                       <p className="text-sm text-muted-foreground px-3">{item.notes}</p>
                     )}
                     {item.image_urls && item.image_urls.length > 0 && (
-                      <div className="flex flex-wrap gap-2 px-3">
-                        {item.image_urls.map((url, idx) => (
-                          <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
-                            <img
-                              src={url}
-                              alt={`Kuva ${idx + 1}`}
-                              className="h-20 w-20 object-cover rounded-md border hover:opacity-80 transition-opacity"
-                            />
-                          </a>
-                        ))}
+                      <div className="px-3">
+                        <InspectionImageGallery imageRefs={item.image_urls} />
                       </div>
                     )}
                   </div>

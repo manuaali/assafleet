@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { format, subMonths, startOfMonth } from "date-fns";
 import { fi } from "date-fns/locale";
+import { InspectionImageGallery } from "@/components/inspection/InspectionImageGallery";
 import type { InspectionItem } from "@/types/database";
 import { inspectionStatusLabels, inspectionItemStatusLabels } from "@/types/database";
 
@@ -424,43 +425,6 @@ function InspectionDetailContent({
   getStatusBadgeVariant: (s: string) => "default" | "secondary" | "destructive" | "outline";
   getStatusLabel: (s: string) => string;
 }) {
-  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    const paths: string[] = [];
-    inspection.inspection_items.forEach((item) => {
-      item.image_urls?.forEach((url) => {
-        if (!url.startsWith("http")) paths.push(url);
-      });
-    });
-    if (paths.length === 0) return;
-
-    const resolve = async () => {
-      const results: Record<string, string> = {};
-      await Promise.all(
-        paths.map(async (path) => {
-          try {
-            const { data, error } = await supabase.functions.invoke("get-signed-url", {
-              body: { bucket: "inspection-images", path },
-            });
-            if (!error && data?.signedUrl) {
-              results[path] = data.signedUrl;
-            }
-          } catch {
-            // ignore
-          }
-        })
-      );
-      setSignedUrls(results);
-    };
-    resolve();
-  }, [inspection]);
-
-  const resolveUrl = (url: string) => {
-    if (url.startsWith("http")) return url;
-    return signedUrls[url] || "";
-  };
-
   return (
     <>
       <DialogHeader>
@@ -513,20 +477,8 @@ function InspectionDetailContent({
                   <p className="text-sm text-muted-foreground px-3">{item.notes}</p>
                 )}
                 {item.image_urls && item.image_urls.length > 0 && (
-                  <div className="flex flex-wrap gap-2 px-3">
-                    {item.image_urls.map((url, idx) => {
-                      const resolved = resolveUrl(url);
-                      if (!resolved) return <Skeleton key={idx} className="h-20 w-20 rounded-md" />;
-                      return (
-                        <a key={idx} href={resolved} target="_blank" rel="noopener noreferrer">
-                          <img
-                            src={resolved}
-                            alt={`Kuva ${idx + 1}`}
-                            className="h-20 w-20 object-cover rounded-md border hover:opacity-80 transition-opacity"
-                          />
-                        </a>
-                      );
-                    })}
+                  <div className="px-3">
+                    <InspectionImageGallery imageRefs={item.image_urls} />
                   </div>
                 )}
               </div>
