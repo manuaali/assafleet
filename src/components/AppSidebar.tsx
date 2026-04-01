@@ -34,7 +34,10 @@ import {
   ClipboardCheck,
   MessageCircle,
   AlertTriangle,
+  Moon,
+  Sun,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 export function AppSidebar() {
   const { user, userRole, isAdmin, isSuperAdmin, signOut } = useAuth();
