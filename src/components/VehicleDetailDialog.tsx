@@ -714,6 +714,10 @@ export function VehicleDetailDialog({
             </div>
           )}
 
+          {/* Activity Log */}
+          <Separator className="my-4" />
+          <VehicleActivityLog vehicleId={vehicle.id} variant="inline" />
+
           {/* Vehicle Attachments - Only visible to admins */}
           {canViewContractDetails && (
             <>
