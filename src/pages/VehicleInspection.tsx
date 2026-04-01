@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { InspectionChecklist } from "@/components/inspection/InspectionChecklist";
 import { AdminInspectionList } from "@/components/inspection/AdminInspectionList";
+import { InspectionImageGallery } from "@/components/inspection/InspectionImageGallery";
 import { cn } from "@/lib/utils";
 import type {
   Vehicle,
