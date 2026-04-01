@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { format, subMonths, startOfMonth } from "date-fns";
 import { fi } from "date-fns/locale";
+import { InspectionImageGallery } from "@/components/inspection/InspectionImageGallery";
 import type { InspectionItem } from "@/types/database";
 import { inspectionStatusLabels, inspectionItemStatusLabels } from "@/types/database";
 
