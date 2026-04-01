@@ -75,6 +75,7 @@ export default function Users() {
         return {
           ...profile,
           role: (userRole?.role as AppRole) || "user",
+          reminders_enabled: (profile as any).reminders_enabled ?? true,
         };
       });
 
