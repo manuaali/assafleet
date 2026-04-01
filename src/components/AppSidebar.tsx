@@ -284,44 +284,62 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsProfileOpen(true)}
-            className="focus:outline-none focus:ring-2 focus:ring-primary rounded-full"
-          >
-            <UserAvatar
-              avatarUrl={userProfile?.avatar_url}
-              fullName={userProfile?.full_name}
-              email={user?.email}
-              size="lg"
-              className="cursor-pointer hover:opacity-80 transition-opacity"
+        <div className="space-y-3">
+          {/* Theme toggle */}
+          <div className="flex items-center justify-between">
+            {!isCollapsed && (
+              <div className="flex items-center gap-2 text-sidebar-foreground/60">
+                {theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                <span className="text-xs">Tumma teema</span>
+              </div>
+            )}
+            <Switch
+              checked={theme === "dark"}
+              onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+              className="data-[state=checked]:bg-sidebar-primary"
             />
-          </button>
-          {!isCollapsed && (
-            <div 
-              className="flex flex-1 flex-col overflow-hidden cursor-pointer"
+          </div>
+
+          {/* User profile row */}
+          <div className="flex items-center gap-3">
+            <button
               onClick={() => setIsProfileOpen(true)}
+              className="focus:outline-none focus:ring-2 focus:ring-primary rounded-full"
             >
-              <span className="truncate text-sm font-medium text-sidebar-foreground hover:underline">
-                {userProfile?.full_name || user?.email}
-              </span>
-              <span className="text-xs text-sidebar-foreground/60">
-                {userRole === "superadmin"
-                  ? "Pääkäyttäjä"
-                  : userRole === "admin"
-                    ? "Ylläpitäjä"
-                    : "Käyttäjä"}
-              </span>
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSignOut}
-            className="h-8 w-8 shrink-0 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
+              <UserAvatar
+                avatarUrl={userProfile?.avatar_url}
+                fullName={userProfile?.full_name}
+                email={user?.email}
+                size="lg"
+                className="cursor-pointer hover:opacity-80 transition-opacity"
+              />
+            </button>
+            {!isCollapsed && (
+              <div 
+                className="flex flex-1 flex-col overflow-hidden cursor-pointer"
+                onClick={() => setIsProfileOpen(true)}
+              >
+                <span className="truncate text-sm font-medium text-sidebar-foreground hover:underline">
+                  {userProfile?.full_name || user?.email}
+                </span>
+                <span className="text-xs text-sidebar-foreground/60">
+                  {userRole === "superadmin"
+                    ? "Pääkäyttäjä"
+                    : userRole === "admin"
+                      ? "Ylläpitäjä"
+                      : "Käyttäjä"}
+                </span>
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSignOut}
+              className="h-8 w-8 shrink-0 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </SidebarFooter>
 
