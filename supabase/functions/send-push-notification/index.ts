@@ -55,7 +55,6 @@ async function createVapidJwt(
     encoder.encode(unsignedToken)
   );
 
-  // Convert DER signature to raw r||s format (64 bytes)
   const sigBytes = new Uint8Array(signature);
   const signatureB64 = uint8ArrayToBase64Url(sigBytes);
 
@@ -70,7 +69,6 @@ async function encryptPayload(
 ): Promise<{ encrypted: Uint8Array; salt: Uint8Array; localPublicKey: Uint8Array }> {
   const encoder = new TextEncoder();
 
-  // Generate local key pair
   const localKeyPair = await crypto.subtle.generateKey(
     { name: "ECDH", namedCurve: "P-256" },
     true,
@@ -81,7 +79,6 @@ async function encryptPayload(
     await crypto.subtle.exportKey("raw", localKeyPair.publicKey)
   );
 
-  // Import subscriber's public key
   const subscriberPublicKey = await crypto.subtle.importKey(
     "raw",
     base64UrlToUint8Array(p256dhKey),
@@ -90,7 +87,6 @@ async function encryptPayload(
     []
   );
 
-  // ECDH shared secret
   const sharedSecret = new Uint8Array(
     await crypto.subtle.deriveBits(
       { name: "ECDH", public: subscriberPublicKey },
@@ -101,7 +97,6 @@ async function encryptPayload(
 
   const authSecretBytes = base64UrlToUint8Array(authSecret);
 
-  // HKDF to derive IKM
   const ikmInfo = encoder.encode("WebPush: info\0");
   const ikmInfoFull = new Uint8Array(ikmInfo.length + 65 + 65);
   ikmInfoFull.set(ikmInfo);
@@ -115,10 +110,8 @@ async function encryptPayload(
     256
   );
 
-  // Generate salt
   const salt = crypto.getRandomValues(new Uint8Array(16));
 
-  // Derive content encryption key
   const cekInfo = encoder.encode("Content-Encoding: aes128gcm\0");
   const prkKey = await crypto.subtle.importKey("raw", prkIkm, "HKDF", false, ["deriveBits"]);
   const cekBits = await crypto.subtle.deriveBits(
@@ -127,7 +120,6 @@ async function encryptPayload(
     128
   );
 
-  // Derive nonce
   const nonceInfo = encoder.encode("Content-Encoding: nonce\0");
   const nonceBits = await crypto.subtle.deriveBits(
     { name: "HKDF", hash: "SHA-256", salt: salt, info: nonceInfo },
@@ -135,14 +127,12 @@ async function encryptPayload(
     96
   );
 
-  // Encrypt with AES-128-GCM
   const contentKey = await crypto.subtle.importKey("raw", cekBits, "AES-GCM", false, ["encrypt"]);
 
   const payloadBytes = encoder.encode(payload);
-  // Add padding delimiter
   const paddedPayload = new Uint8Array(payloadBytes.length + 1);
   paddedPayload.set(payloadBytes);
-  paddedPayload[payloadBytes.length] = 2; // delimiter
+  paddedPayload[payloadBytes.length] = 2;
 
   const encrypted = new Uint8Array(
     await crypto.subtle.encrypt(
@@ -152,7 +142,6 @@ async function encryptPayload(
     )
   );
 
-  // Build aes128gcm body: salt(16) + rs(4) + idlen(1) + keyid(65) + encrypted
   const rs = 4096;
   const header_bytes = new Uint8Array(16 + 4 + 1 + 65);
   header_bytes.set(salt);
@@ -197,7 +186,6 @@ async function sendPushToSubscription(
     });
 
     if (response.status === 410 || response.status === 404) {
-      // Subscription expired, should be removed
       return false;
     }
 
@@ -206,6 +194,171 @@ async function sendPushToSubscription(
     console.error("Error sending push:", error);
     return false;
   }
+}
+
+/**
+ * Check which users have overdue mileage or inspection and send reminders.
+ * Only sends to users where reminders_enabled = true in profiles.
+ */
+async function handleDailyReminders(supabase: any, vapidPrivateKeyJwk: JsonWebKey, vapidPublicKey: string, vapidSubject: string) {
+  const now = new Date();
+  
+  // Get all active vehicles with assigned users
+  const { data: vehicles, error: vErr } = await supabase
+    .from("vehicles")
+    .select("id, responsible_user_id")
+    .eq("status", "active")
+    .not("responsible_user_id", "is", null);
+  
+  if (vErr || !vehicles || vehicles.length === 0) {
+    console.log("No active vehicles with users found");
+    return { sent: 0, failed: 0 };
+  }
+
+  const userIds = [...new Set(vehicles.map((v: any) => v.responsible_user_id))];
+  
+  // Get profiles with reminders_enabled
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("user_id, reminders_enabled")
+    .in("user_id", userIds)
+    .eq("reminders_enabled", true);
+  
+  const enabledUserIds = new Set((profiles || []).map((p: any) => p.user_id));
+  
+  // Filter vehicles to only those with reminders enabled
+  const eligibleVehicles = vehicles.filter((v: any) => enabledUserIds.has(v.responsible_user_id));
+  
+  if (eligibleVehicles.length === 0) {
+    console.log("No users with reminders enabled");
+    return { sent: 0, failed: 0 };
+  }
+
+  const vehicleIds = eligibleVehicles.map((v: any) => v.id);
+  const eligibleUserIds = [...new Set(eligibleVehicles.map((v: any) => v.responsible_user_id))];
+
+  // --- Check mileage overdue ---
+  // Get current week's Monday
+  const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon
+  const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const currentWeekMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMonday);
+  
+  // Get latest mileage log per vehicle this week
+  const { data: mileageLogs } = await supabase
+    .from("mileage_logs")
+    .select("vehicle_id, logged_at")
+    .in("vehicle_id", vehicleIds)
+    .gte("logged_at", currentWeekMonday.toISOString())
+    .order("logged_at", { ascending: false });
+  
+  const vehiclesWithMileageThisWeek = new Set((mileageLogs || []).map((l: any) => l.vehicle_id));
+  
+  // Users with overdue mileage
+  const mileageOverdueUserIds = new Set<string>();
+  eligibleVehicles.forEach((v: any) => {
+    if (!vehiclesWithMileageThisWeek.has(v.id)) {
+      mileageOverdueUserIds.add(v.responsible_user_id);
+    }
+  });
+
+  // --- Check inspection overdue ---
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  
+  const { data: inspections } = await supabase
+    .from("vehicle_inspections")
+    .select("vehicle_id, status")
+    .in("vehicle_id", vehicleIds)
+    .eq("inspection_month", currentMonth)
+    .eq("status", "completed");
+  
+  const vehiclesWithInspection = new Set((inspections || []).map((i: any) => i.vehicle_id));
+  
+  const inspectionOverdueUserIds = new Set<string>();
+  eligibleVehicles.forEach((v: any) => {
+    if (!vehiclesWithInspection.has(v.id)) {
+      inspectionOverdueUserIds.add(v.responsible_user_id);
+    }
+  });
+
+  // Combine user IDs that need reminders
+  const usersNeedingReminder = new Map<string, string[]>();
+  
+  mileageOverdueUserIds.forEach(uid => {
+    if (!usersNeedingReminder.has(uid)) usersNeedingReminder.set(uid, []);
+    usersNeedingReminder.get(uid)!.push("mileage");
+  });
+  
+  inspectionOverdueUserIds.forEach(uid => {
+    if (!usersNeedingReminder.has(uid)) usersNeedingReminder.set(uid, []);
+    usersNeedingReminder.get(uid)!.push("inspection");
+  });
+
+  if (usersNeedingReminder.size === 0) {
+    console.log("No overdue items found");
+    return { sent: 0, failed: 0 };
+  }
+
+  // Get push subscriptions for these users
+  const reminderUserIds = [...usersNeedingReminder.keys()];
+  const { data: subscriptions } = await supabase
+    .from("push_subscriptions")
+    .select("*")
+    .in("user_id", reminderUserIds);
+
+  if (!subscriptions || subscriptions.length === 0) {
+    console.log("No push subscriptions for users needing reminders");
+    return { sent: 0, failed: 0 };
+  }
+
+  let sent = 0;
+  let failed = 0;
+  const expiredEndpoints: string[] = [];
+
+  for (const sub of subscriptions) {
+    const overdueTypes = usersNeedingReminder.get(sub.user_id) || [];
+    
+    let title = "Muistutus";
+    let body = "";
+    let tag = "daily-reminder";
+    let url = "/my-vehicle";
+
+    if (overdueTypes.includes("mileage") && overdueTypes.includes("inspection")) {
+      title = "Kilometrikirjaus ja tarkastus tekemättä";
+      body = "Kilometrikirjaus ja kuukausitarkastus odottavat suorittamista.";
+      tag = "mileage-inspection";
+    } else if (overdueTypes.includes("mileage")) {
+      title = "Kilometrikirjaus tekemättä";
+      body = "Muista kirjata ajoneuvosi kilometrit!";
+      tag = "mileage";
+    } else if (overdueTypes.includes("inspection")) {
+      title = "Kuukausitarkastus tekemättä";
+      body = "Kuukausitarkastus odottaa suorittamista.";
+      tag = "inspection";
+      url = "/vehicle-inspection";
+    }
+
+    const payload = JSON.stringify({ title, body, tag, url });
+
+    const success = await sendPushToSubscription(
+      sub, payload, vapidPrivateKeyJwk, vapidPublicKey, vapidSubject
+    );
+    if (success) {
+      sent++;
+    } else {
+      failed++;
+      expiredEndpoints.push(sub.endpoint);
+    }
+  }
+
+  // Clean up expired subscriptions
+  if (expiredEndpoints.length > 0) {
+    await supabase
+      .from("push_subscriptions")
+      .delete()
+      .in("endpoint", expiredEndpoints);
+  }
+
+  return { sent, failed, total: subscriptions.length };
 }
 
 Deno.serve(async (req) => {
@@ -231,7 +384,6 @@ Deno.serve(async (req) => {
     const isServiceRole = token === supabaseServiceKey;
 
     if (!isServiceRole) {
-      // Verify the caller is an authenticated admin
       const userClient = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: authHeader } },
       });
@@ -242,7 +394,6 @@ Deno.serve(async (req) => {
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      // Check admin role using service client
       const adminClient = createClient(supabaseUrl, supabaseServiceKey);
       const { data: roleData } = await adminClient
         .from("user_roles")
@@ -276,7 +427,16 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { type, user_ids } = body;
 
-    // Define notification content based on type
+    // Handle daily reminder cron - checks overdue status per user
+    if (type === "daily_reminder") {
+      const result = await handleDailyReminders(supabase, vapidPrivateKeyJwk, vapidPublicKey, vapidSubject);
+      return new Response(
+        JSON.stringify(result),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Manual / specific notification types
     let title = "Muistutus";
     let notifBody = "Sinulla on uusi muistutus.";
     let tag = "reminder";
@@ -318,11 +478,7 @@ Deno.serve(async (req) => {
 
     for (const sub of subscriptions || []) {
       const success = await sendPushToSubscription(
-        sub,
-        payload,
-        vapidPrivateKeyJwk,
-        vapidPublicKey,
-        vapidSubject
+        sub, payload, vapidPrivateKeyJwk, vapidPublicKey, vapidSubject
       );
       if (success) {
         sent++;
@@ -332,7 +488,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Clean up expired subscriptions
     if (expiredEndpoints.length > 0) {
       await supabase
         .from("push_subscriptions")

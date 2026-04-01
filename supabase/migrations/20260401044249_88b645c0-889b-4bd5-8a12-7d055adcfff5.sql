@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN reminders_enabled boolean NOT NULL DEFAULT true;

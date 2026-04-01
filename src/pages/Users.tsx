@@ -25,7 +25,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
 import { formatDate } from "@/lib/utils";
-import { Search, Users as UsersIcon, Shield, ShieldCheck, User } from "lucide-react";
+import { Search, Users as UsersIcon, Shield, ShieldCheck, User, Bell, BellOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { AppRole, roleLabels } from "@/types/database";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
 
@@ -37,6 +38,7 @@ interface UserWithRole {
   phone: string | null;
   created_at: string;
   role: AppRole;
+  reminders_enabled: boolean;
 }
 
 export default function Users() {
@@ -73,6 +75,7 @@ export default function Users() {
         return {
           ...profile,
           role: (userRole?.role as AppRole) || "user",
+          reminders_enabled: (profile as any).reminders_enabled ?? true,
         };
       });
 
@@ -116,6 +119,33 @@ export default function Users() {
         variant: "destructive",
         title: "Virhe",
         description: "Roolin päivittäminen epäonnistui.",
+      });
+    }
+  };
+
+  const handleRemindersToggle = async (userId: string, enabled: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ reminders_enabled: enabled } as any)
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      setUsers((prev) =>
+        prev.map((u) => (u.user_id === userId ? { ...u, reminders_enabled: enabled } : u))
+      );
+
+      toast({
+        title: "Muistutusasetus päivitetty",
+        description: enabled ? "Muistutukset käytössä" : "Muistutukset pois käytöstä",
+      });
+    } catch (error: any) {
+      console.error("Error updating reminders:", error);
+      toast({
+        variant: "destructive",
+        title: "Virhe",
+        description: "Muistutusasetuksen päivittäminen epäonnistui.",
       });
     }
   };
@@ -234,6 +264,7 @@ export default function Users() {
                       <TableHead>Puhelin</TableHead>
                       <TableHead>Liittynyt</TableHead>
                       <TableHead>Rooli</TableHead>
+                      <TableHead>Muistutukset</TableHead>
                       {isSuperAdmin && <TableHead>Toiminnot</TableHead>}
                     </TableRow>
                   </TableHeader>
@@ -281,6 +312,19 @@ export default function Users() {
                                 {roleLabels[user.role]}
                               </Badge>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={user.reminders_enabled}
+                                onCheckedChange={(checked) => handleRemindersToggle(user.user_id, checked)}
+                              />
+                              {user.reminders_enabled ? (
+                                <Bell className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <BellOff className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </div>
                           </TableCell>
                           {isSuperAdmin && (
                             <TableCell>
