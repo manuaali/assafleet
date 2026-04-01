@@ -14,6 +14,7 @@ import { useMileageDueStatus, formatDueDateMessage } from "@/hooks/use-mileage-d
 import { getMileagePredictionFromLogs } from "@/hooks/use-mileage-prediction";
 import { cn, formatDate } from "@/lib/utils";
 import { ServiceVisitsCard } from "@/components/vehicles/ServiceVisitsCard";
+import { VehicleActivityLog } from "@/components/vehicles/VehicleActivityLog";
 import {
   Car,
   Fuel,
@@ -445,6 +446,9 @@ function VehicleCard({
 
       {/* Service Visits Card */}
       <ServiceVisitsCard vehicleId={vehicle.id} />
+
+      {/* Activity Log */}
+      <VehicleActivityLog vehicleId={vehicle.id} />
     </div>
   );
 }
