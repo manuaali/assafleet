@@ -445,6 +445,9 @@ function VehicleCard({
 
       {/* Service Visits Card */}
       <ServiceVisitsCard vehicleId={vehicle.id} />
+
+      {/* Activity Log */}
+      <VehicleActivityLog vehicleId={vehicle.id} />
     </div>
   );
 }
