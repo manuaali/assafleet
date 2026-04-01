@@ -41,6 +41,7 @@ import { Switch } from "@/components/ui/switch";
 
 export function AppSidebar() {
   const { user, userRole, isAdmin, isSuperAdmin, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const { state } = useSidebar();
