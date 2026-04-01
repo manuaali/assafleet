@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => (
+  <ThemeProvider attribute="class" defaultTheme="light" storageKey="assafleet-theme">
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
