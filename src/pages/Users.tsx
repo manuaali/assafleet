@@ -123,6 +123,33 @@ export default function Users() {
     }
   };
 
+  const handleRemindersToggle = async (userId: string, enabled: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ reminders_enabled: enabled } as any)
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      setUsers((prev) =>
+        prev.map((u) => (u.user_id === userId ? { ...u, reminders_enabled: enabled } : u))
+      );
+
+      toast({
+        title: "Muistutusasetus päivitetty",
+        description: enabled ? "Muistutukset käytössä" : "Muistutukset pois käytöstä",
+      });
+    } catch (error: any) {
+      console.error("Error updating reminders:", error);
+      toast({
+        variant: "destructive",
+        title: "Virhe",
+        description: "Muistutusasetuksen päivittäminen epäonnistui.",
+      });
+    }
+  };
+
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       (user.full_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
