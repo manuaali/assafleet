@@ -400,85 +400,147 @@ export function AdminInspectionList() {
       <Dialog open={!!selectedInspection} onOpenChange={() => setSelectedInspection(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           {selectedInspection && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  {getStatusIcon(selectedInspection.status)}
-                  {selectedInspection.vehicle.make} {selectedInspection.vehicle.model}
-                </DialogTitle>
-                <DialogDescription>
-                  {selectedInspection.profile?.full_name || selectedInspection.profile?.email} •{" "}
-                  {format(new Date(selectedInspection.inspection_month), "LLLL yyyy", { locale: fi })}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 mt-4">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
-                  <span className="text-sm">Tila</span>
-                  <Badge variant={getStatusBadgeVariant(selectedInspection.status)}>
-                    {getStatusLabel(selectedInspection.status)}
-                  </Badge>
-                </div>
-
-                {selectedInspection.completed_at && (
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
-                    <span className="text-sm">Suoritettu</span>
-                    <span className="text-sm font-medium">
-                      {format(new Date(selectedInspection.completed_at), "dd/MM/yyyy 'klo' HH:mm", { locale: fi })}
-                    </span>
-                  </div>
-                )}
-
-                {selectedInspection.inspection_items.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="font-medium">Tarkastuskohteet</h4>
-                    {selectedInspection.inspection_items.map((item) => (
-                      <div key={item.id} className="space-y-2">
-                        <div className="flex items-center justify-between p-3 rounded-lg border">
-                          <span className="text-sm">{item.item_label}</span>
-                          <Badge
-                            variant={
-                              item.status === "ok"
-                                ? "default"
-                                : item.status === "minor_issue"
-                                  ? "secondary"
-                                  : "destructive"
-                            }
-                          >
-                            {inspectionItemStatusLabels[item.status!]}
-                          </Badge>
-                        </div>
-                        {item.notes && (
-                          <p className="text-sm text-muted-foreground px-3">{item.notes}</p>
-                        )}
-                        {item.image_urls && item.image_urls.length > 0 && (
-                          <div className="flex flex-wrap gap-2 px-3">
-                            {item.image_urls.map((url, idx) => (
-                              <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
-                                <img
-                                  src={url}
-                                  alt={`Kuva ${idx + 1}`}
-                                  className="h-20 w-20 object-cover rounded-md border hover:opacity-80 transition-opacity"
-                                />
-                              </a>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {selectedInspection.notes && (
-                  <div className="p-3 rounded-lg bg-muted">
-                    <p className="text-sm font-medium mb-1">Yleiset huomiot:</p>
-                    <p className="text-sm text-muted-foreground">{selectedInspection.notes}</p>
-                  </div>
-                )}
-              </div>
-            </>
+            <InspectionDetailContent
+              inspection={selectedInspection}
+              getStatusIcon={getStatusIcon}
+              getStatusBadgeVariant={getStatusBadgeVariant}
+              getStatusLabel={getStatusLabel}
+            />
           )}
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function InspectionDetailContent({
+  inspection,
+  getStatusIcon,
+  getStatusBadgeVariant,
+  getStatusLabel,
+}: {
+  inspection: InspectionWithDetails;
+  getStatusIcon: (s: string) => React.ReactNode;
+  getStatusBadgeVariant: (s: string) => "default" | "secondary" | "destructive" | "outline";
+  getStatusLabel: (s: string) => string;
+}) {
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const paths: string[] = [];
+    inspection.inspection_items.forEach((item) => {
+      item.image_urls?.forEach((url) => {
+        if (!url.startsWith("http")) paths.push(url);
+      });
+    });
+    if (paths.length === 0) return;
+
+    const resolve = async () => {
+      const results: Record<string, string> = {};
+      await Promise.all(
+        paths.map(async (path) => {
+          try {
+            const { data, error } = await supabase.functions.invoke("get-signed-url", {
+              body: { bucket: "inspection-images", path },
+            });
+            if (!error && data?.signedUrl) {
+              results[path] = data.signedUrl;
+            }
+          } catch {
+            // ignore
+          }
+        })
+      );
+      setSignedUrls(results);
+    };
+    resolve();
+  }, [inspection]);
+
+  const resolveUrl = (url: string) => {
+    if (url.startsWith("http")) return url;
+    return signedUrls[url] || "";
+  };
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          {getStatusIcon(inspection.status)}
+          {inspection.vehicle.make} {inspection.vehicle.model}
+        </DialogTitle>
+        <DialogDescription>
+          {inspection.profile?.full_name || inspection.profile?.email} •{" "}
+          {format(new Date(inspection.inspection_month), "LLLL yyyy", { locale: fi })}
+        </DialogDescription>
+      </DialogHeader>
+      <div className="space-y-4 mt-4">
+        <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
+          <span className="text-sm">Tila</span>
+          <Badge variant={getStatusBadgeVariant(inspection.status)}>
+            {getStatusLabel(inspection.status)}
+          </Badge>
+        </div>
+
+        {inspection.completed_at && (
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
+            <span className="text-sm">Suoritettu</span>
+            <span className="text-sm font-medium">
+              {format(new Date(inspection.completed_at), "dd/MM/yyyy 'klo' HH:mm", { locale: fi })}
+            </span>
+          </div>
+        )}
+
+        {inspection.inspection_items.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="font-medium">Tarkastuskohteet</h4>
+            {inspection.inspection_items.map((item) => (
+              <div key={item.id} className="space-y-2">
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <span className="text-sm">{item.item_label}</span>
+                  <Badge
+                    variant={
+                      item.status === "ok"
+                        ? "default"
+                        : item.status === "minor_issue"
+                          ? "secondary"
+                          : "destructive"
+                    }
+                  >
+                    {inspectionItemStatusLabels[item.status!]}
+                  </Badge>
+                </div>
+                {item.notes && (
+                  <p className="text-sm text-muted-foreground px-3">{item.notes}</p>
+                )}
+                {item.image_urls && item.image_urls.length > 0 && (
+                  <div className="flex flex-wrap gap-2 px-3">
+                    {item.image_urls.map((url, idx) => {
+                      const resolved = resolveUrl(url);
+                      if (!resolved) return <Skeleton key={idx} className="h-20 w-20 rounded-md" />;
+                      return (
+                        <a key={idx} href={resolved} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={resolved}
+                            alt={`Kuva ${idx + 1}`}
+                            className="h-20 w-20 object-cover rounded-md border hover:opacity-80 transition-opacity"
+                          />
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {inspection.notes && (
+          <div className="p-3 rounded-lg bg-muted">
+            <p className="text-sm font-medium mb-1">Yleiset huomiot:</p>
+            <p className="text-sm text-muted-foreground">{inspection.notes}</p>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
