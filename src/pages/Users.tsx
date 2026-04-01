@@ -25,7 +25,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
 import { formatDate } from "@/lib/utils";
-import { Search, Users as UsersIcon, Shield, ShieldCheck, User } from "lucide-react";
+import { Search, Users as UsersIcon, Shield, ShieldCheck, User, Bell, BellOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { AppRole, roleLabels } from "@/types/database";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
 
@@ -37,6 +38,7 @@ interface UserWithRole {
   phone: string | null;
   created_at: string;
   role: AppRole;
+  reminders_enabled: boolean;
 }
 
 export default function Users() {
