@@ -719,6 +719,14 @@ export function VehicleDetailDialog({
           <Separator className="my-4" />
           <VehicleActivityLog vehicleId={vehicle.id} variant="inline" />
 
+          {/* Issues Summary - Only visible to admins */}
+          {canViewContractDetails && (
+            <>
+              <Separator className="my-4" />
+              <VehicleIssuesSummary vehicleId={vehicle.id} />
+            </>
+          )}
+
           {/* Vehicle Attachments - Only visible to admins */}
           {canViewContractDetails && (
             <>
