@@ -313,6 +313,19 @@ export default function Users() {
                               </Badge>
                             )}
                           </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={user.reminders_enabled}
+                                onCheckedChange={(checked) => handleRemindersToggle(user.user_id, checked)}
+                              />
+                              {user.reminders_enabled ? (
+                                <Bell className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <BellOff className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </div>
+                          </TableCell>
                           {isSuperAdmin && (
                             <TableCell>
                               {currentUser?.id !== user.user_id && (
