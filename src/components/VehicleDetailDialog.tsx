@@ -30,6 +30,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { VehicleAttachmentsCard } from "@/components/vehicles/VehicleAttachmentsCard";
 import { VehicleActivityLog } from "@/components/vehicles/VehicleActivityLog";
+import { VehicleIssuesSummary } from "@/components/vehicles/VehicleIssuesSummary";
 import { useMileagePrediction } from "@/hooks/use-mileage-prediction";
 import { CalendarIcon, Phone, Wrench, Snowflake, Car, Gauge, User, Building2, FileText, Hash, Euro, TrendingUp, CalendarClock, Activity } from "lucide-react";
 import {
