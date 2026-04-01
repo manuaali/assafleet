@@ -264,6 +264,7 @@ export default function Users() {
                       <TableHead>Puhelin</TableHead>
                       <TableHead>Liittynyt</TableHead>
                       <TableHead>Rooli</TableHead>
+                      <TableHead>Muistutukset</TableHead>
                       {isSuperAdmin && <TableHead>Toiminnot</TableHead>}
                     </TableRow>
                   </TableHeader>
