@@ -4,6 +4,7 @@ import { differenceInDays } from "date-fns";
 import {
   AlertTriangle,
   CalendarClock,
+  CheckCircle2,
   ClipboardCheck,
   Gauge,
   Phone,
@@ -19,7 +20,7 @@ import { getMileagePredictionFromLogs } from "@/hooks/use-mileage-prediction";
 import { ProfileDialog } from "@/components/profile/ProfileDialog";
 import { cn, formatDate } from "@/lib/utils";
 import type { Vehicle, MileageLog } from "@/types/database";
-import { startOfMonth, format } from "date-fns";
+import { startOfMonth } from "date-fns";
 
 type Severity = "info" | "warning" | "destructive";
 
@@ -63,7 +64,8 @@ export function UserTasksCard({ vehicle, mileageLogs, onScrollToMileage }: UserT
 
   // Inspection-this-month check (per vehicle)
   useEffect(() => {
-    const month = format(startOfMonth(new Date()), "yyyy-MM-dd");
+    // Match storage convention used in VehicleInspection.tsx (UTC date string)
+    const month = startOfMonth(new Date()).toISOString().split("T")[0];
     supabase
       .from("vehicle_inspections")
       .select("status")
@@ -185,7 +187,25 @@ export function UserTasksCard({ vehicle, mileageLogs, onScrollToMileage }: UserT
     }
   }
 
-  if (tasks.length === 0) return null;
+  if (tasks.length === 0) {
+    // Wait until inspection check has resolved before showing "all done"
+    if (inspectionDoneThisMonth === null) return null;
+    return (
+      <Card className="border-success/30 bg-success/5">
+        <CardContent className="py-4 sm:py-5 flex items-center gap-3">
+          <CheckCircle2 className="h-6 w-6 sm:h-7 sm:w-7 text-success shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm sm:text-base font-medium leading-tight">
+              Hyvä! Olet ajan tasalla.
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Ei avoimia tehtäviä juuri nyt.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <>
