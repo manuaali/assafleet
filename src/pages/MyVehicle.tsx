@@ -15,6 +15,7 @@ import { getMileagePredictionFromLogs } from "@/hooks/use-mileage-prediction";
 import { cn, formatDate } from "@/lib/utils";
 import { ServiceVisitsCard } from "@/components/vehicles/ServiceVisitsCard";
 import { VehicleActivityLog } from "@/components/vehicles/VehicleActivityLog";
+import { UserTasksCard } from "@/components/vehicles/UserTasksCard";
 import {
   Car,
   Fuel,
