@@ -20,7 +20,7 @@ import { getMileagePredictionFromLogs } from "@/hooks/use-mileage-prediction";
 import { ProfileDialog } from "@/components/profile/ProfileDialog";
 import { cn, formatDate } from "@/lib/utils";
 import type { Vehicle, MileageLog } from "@/types/database";
-import { startOfMonth, format } from "date-fns";
+import { startOfMonth } from "date-fns";
 
 type Severity = "info" | "warning" | "destructive";
 
