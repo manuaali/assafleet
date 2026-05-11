@@ -64,7 +64,8 @@ export function UserTasksCard({ vehicle, mileageLogs, onScrollToMileage }: UserT
 
   // Inspection-this-month check (per vehicle)
   useEffect(() => {
-    const month = format(startOfMonth(new Date()), "yyyy-MM-dd");
+    // Match storage convention used in VehicleInspection.tsx (UTC date string)
+    const month = startOfMonth(new Date()).toISOString().split("T")[0];
     supabase
       .from("vehicle_inspections")
       .select("status")
