@@ -31,11 +31,11 @@ export function ProtectedRoute({
   }
 
   if (requireSuperAdmin && !isSuperAdmin) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={isAdmin ? "/dashboard" : "/my-vehicle"} replace />;
   }
 
   if (requireAdmin && !isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/my-vehicle" replace />;
   }
 
   return <>{children}</>;
