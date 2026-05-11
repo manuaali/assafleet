@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Fetch role from server-side edge function for secure verification
   const fetchUserRoleFromServer = async (
     accessToken: string
-  ): Promise<ServerRoleResponse | null> => {
+  ): Promise<{ role: ServerRoleResponse | null; authInvalid: boolean }> => {
     try {
       const response = await promiseWithTimeout(
         supabase.functions.invoke("get-user-role", {
@@ -61,24 +61,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         6500
       );
 
-      // Check for HTTP errors (401, 403, etc.) or function errors
       if (response.error) {
         console.error("Error fetching role from server:", response.error);
-        // If token is invalid/expired, return null to trigger graceful fallback
-        return null;
+        const status =
+          (response.error as { status?: number; context?: { status?: number } })?.status ??
+          (response.error as { context?: { status?: number } })?.context?.status;
+        const message = String((response.error as { message?: string })?.message ?? "");
+        const authInvalid =
+          status === 401 ||
+          status === 403 ||
+          /invalid|expired|unauthorized|jwt|token/i.test(message);
+        return { role: null, authInvalid };
       }
 
-      // Check if response data indicates an error
       if (response.data?.error) {
         console.error("Server returned error:", response.data.error);
-        return null;
+        return { role: null, authInvalid: false };
       }
 
-      return response.data as ServerRoleResponse;
+      return { role: response.data as ServerRoleResponse, authInvalid: false };
     } catch (error) {
-      // Includes timeouts and network failures
       console.error("Error in fetchUserRoleFromServer:", error);
-      return null;
+      return { role: null, authInvalid: false };
     }
   };
 
@@ -132,10 +136,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRoleLoading(true);
 
         void (async () => {
-          const serverRole = await fetchUserRoleFromServer(newSession.access_token);
-          if (isMounted) {
-            updateRoleState(serverRole);
+          const { role, authInvalid } = await fetchUserRoleFromServer(newSession.access_token);
+          if (!isMounted) return;
+          if (authInvalid) {
+            await supabase.auth.signOut().catch(() => {});
+            clearAuthState();
+            return;
           }
+          updateRoleState(role);
         })();
       } else {
         updateRoleState(null);
@@ -166,10 +174,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (existingSession.access_token) {
           setRoleLoading(true);
           void (async () => {
-            const serverRole = await fetchUserRoleFromServer(existingSession.access_token);
-            if (isMounted) {
-              updateRoleState(serverRole);
+            const { role, authInvalid } = await fetchUserRoleFromServer(existingSession.access_token);
+            if (!isMounted) return;
+            if (authInvalid) {
+              await supabase.auth.signOut().catch(() => {});
+              clearAuthState();
+              return;
             }
+            updateRoleState(role);
           })();
         } else {
           updateRoleState(null);
