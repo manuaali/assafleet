@@ -115,19 +115,8 @@ export default function Dashboard() {
     navigate(`/vehicles?highlight=${vehicleId}`);
   };
 
-  if (!isAdmin) {
-    // User dashboard - redirect to my-vehicle or show simplified view
-    return (
-      <DashboardLayout>
-        <div className="animate-fade-in">
-          <h1 className="text-2xl font-bold tracking-tight">Tervetuloa!</h1>
-          <p className="mt-2 text-muted-foreground">
-            Siirry "Oma ajoneuvo" -sivulle nähdäksesi ajoneuvosi tiedot.
-          </p>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  // Note: non-admin users are redirected away from /dashboard by ProtectedRoute,
+  // so this component only renders for admins/superadmins.
 
   return (
     <DashboardLayout>
