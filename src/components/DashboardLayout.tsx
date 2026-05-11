@@ -42,14 +42,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full overflow-x-hidden">
         <AppSidebar />
-        <SidebarInset className="flex flex-1 flex-col">
+        <SidebarInset className="flex flex-1 flex-col min-w-0 max-w-full">
           <header className="sticky top-0 z-10 flex h-12 sm:h-14 items-center gap-4 border-b bg-background/95 px-3 sm:px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <SidebarTrigger className="-ml-1" />
           </header>
-          <main className="flex-1 p-3 sm:p-6">
-            {children}
+          <main className="flex-1 p-3 sm:p-6 min-w-0 max-w-full overflow-x-hidden">
+            <div className="min-w-0 max-w-full">
+              {children}
+            </div>
           </main>
         </SidebarInset>
       </div>
