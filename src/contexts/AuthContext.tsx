@@ -174,10 +174,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (existingSession.access_token) {
           setRoleLoading(true);
           void (async () => {
-            const serverRole = await fetchUserRoleFromServer(existingSession.access_token);
-            if (isMounted) {
-              updateRoleState(serverRole);
+            const { role, authInvalid } = await fetchUserRoleFromServer(existingSession.access_token);
+            if (!isMounted) return;
+            if (authInvalid) {
+              await supabase.auth.signOut().catch(() => {});
+              clearAuthState();
+              return;
             }
+            updateRoleState(role);
           })();
         } else {
           updateRoleState(null);
