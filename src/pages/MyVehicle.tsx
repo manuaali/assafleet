@@ -15,6 +15,7 @@ import { getMileagePredictionFromLogs } from "@/hooks/use-mileage-prediction";
 import { cn, formatDate } from "@/lib/utils";
 import { ServiceVisitsCard } from "@/components/vehicles/ServiceVisitsCard";
 import { VehicleActivityLog } from "@/components/vehicles/VehicleActivityLog";
+import { UserTasksCard } from "@/components/vehicles/UserTasksCard";
 import {
   Car,
   Fuel,
@@ -179,6 +180,16 @@ function VehicleCard({
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Tasks / reminders for this vehicle */}
+      <UserTasksCard
+        vehicle={vehicle}
+        mileageLogs={mileageLogs}
+        onScrollToMileage={() => {
+          mileageSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+          setTimeout(() => mileageInputRef.current?.focus(), 400);
+        }}
+      />
+
       {/* Vehicle Info Card */}
       <Card>
         <CardHeader className="pb-3 sm:pb-6">
