@@ -4,6 +4,7 @@ import { differenceInDays } from "date-fns";
 import {
   AlertTriangle,
   CalendarClock,
+  CheckCircle2,
   ClipboardCheck,
   Gauge,
   Phone,
