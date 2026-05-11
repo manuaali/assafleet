@@ -137,7 +137,7 @@ export function AppSidebar() {
       title: "Yleisnäkymä",
       url: "/dashboard",
       icon: LayoutDashboard,
-      visible: true,
+      visible: isAdmin,
     },
     {
       title: "Ajoneuvot",
