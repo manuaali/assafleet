@@ -187,7 +187,25 @@ export function UserTasksCard({ vehicle, mileageLogs, onScrollToMileage }: UserT
     }
   }
 
-  if (tasks.length === 0) return null;
+  if (tasks.length === 0) {
+    // Wait until inspection check has resolved before showing "all done"
+    if (inspectionDoneThisMonth === null) return null;
+    return (
+      <Card className="border-success/30 bg-success/5">
+        <CardContent className="py-4 sm:py-5 flex items-center gap-3">
+          <CheckCircle2 className="h-6 w-6 sm:h-7 sm:w-7 text-success shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm sm:text-base font-medium leading-tight">
+              Hyvä! Olet ajan tasalla.
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Ei avoimia tehtäviä juuri nyt.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <>
