@@ -129,7 +129,7 @@ export function VehicleActivityLog({ vehicleId, variant = "card" }: VehicleActiv
 
       for (const d of damageData) {
         const statusLabel =
-          d.status === "resolved" ? "Käsitelty" : d.status === "in_progress" ? "Käsittelyssä" : "Odottaa";
+          d.status === "reviewed" ? "Käsitelty" : d.status === "closed" ? "Suljettu" : "Käsittelemätön";
         entries.push({
           id: `d-${d.id}`,
           type: "damage",
