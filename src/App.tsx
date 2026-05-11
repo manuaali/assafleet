@@ -29,12 +29,12 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<RoleBasedHome />} />
             <Route path="/login" element={<Login />} />
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requireAdmin>
                   <Dashboard />
                 </ProtectedRoute>
               }
