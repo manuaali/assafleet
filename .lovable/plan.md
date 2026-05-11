@@ -1,83 +1,51 @@
 
-# Push-ilmoitukset puhelimeen
+## Tavoite
 
-Push-ilmoitusten toteuttaminen vaatii useita osia: PWA-asennus (jotta sovellus voidaan asentaa puhelimeen), Service Worker, Push API ja backend-logiikka ilmoitusten lähettämiseen.
+Tällä hetkellä `/dashboard` on käytännössä tyhjä käyttäjille (vain "Tervetuloa!" -teksti). Adminit saavat siellä koko yleisnäkymän. Ratkaisu: käyttäjät ohjataan suoraan **Oma ajoneuvo** -sivulle, ja sinne tuodaan kaksi uutta osiota, jotka tekevät sivusta oikean "kotinäkymän".
 
-## Yleiskuva
+## Muutokset
 
-Käyttäjät saavat push-ilmoituksia puhelimeensa esimerkiksi:
-- Maanantaiaamuna muistutus kilometrikirjauksesta
-- Kuukauden ensimmäisenä arkipäivänä muistutus kuukausitarkastuksesta
-- Admin voi myöhemmin lähettää manuaalisia ilmoituksia
+### 1. Reititys & navigaatio
+- `App.tsx`: Juurireitti `/` ohjaa adminit `/dashboard`-sivulle ja käyttäjät `/my-vehicle`-sivulle.
+- `/dashboard`-reitti suojataan `requireAdmin`-lipulla, eli käyttäjä joka yrittää avata sen ohjataan automaattisesti omalle ajoneuvosivulleen.
+- `AppSidebar.tsx`: "Yleisnäkymä"-linkki näkyy vain admineille. Käyttäjille sivupalkin ensimmäinen kohta on "Oma ajoneuvo".
+- Dashboard.tsx-komponentista poistetaan turha non-admin -haara (ei käytetä enää).
 
-## Toteutussuunnitelma
+### 2. Tehtävät / muistutukset (uusi kortti `MyVehicle`-sivun yläosaan)
+Uusi komponentti `src/components/vehicles/UserTasksCard.tsx`. Näyttää käyttäjälle ajoneuvokohtaisesti vain ne kohdat, jotka vaativat toimenpiteitä — kortti piiloutuu kokonaan jos kaikki on kunnossa.
 
-### Vaihe 1: PWA-asennus (vite-plugin-pwa)
-- Asennetaan `vite-plugin-pwa`-paketti
-- Konfiguroidaan `vite.config.ts` manifest-tiedoilla (sovelluksen nimi, ikonit, värit)
-- Lisätään `index.html`:iin mobiili-meta-tagit (theme-color, apple-mobile-web-app jne.)
-- Luodaan PWA-ikonit `public/`-kansioon (192x192 ja 512x512)
-- Tämä mahdollistaa sovelluksen asentamisen puhelimen kotinäytölle
+Mahdolliset tehtäväkortit:
+- **Kirjaa kilometrit** — jos `useMileageDueStatus` palauttaa `due` tai `overdue`. Painikkeella scrollataan km-osioon tai avataan dialogi.
+- **Suorita kuukausitarkastus** — jos `useInspectionDue` näyttää että tämän kuun tarkastus puuttuu. Linkki `/inspection`.
+- **Lisää puhelinnumero** — jos `profile.phone` puuttuu. Avaa `ProfileDialog`.
+- **Sopimus päättymässä** — jos `contract_end_date` < 60 päivää.
+- **Sopimuskilometrit ylittymässä** — jos km > 90 % rajasta tai ennusteen mukaan ylittyy ennen sopimuksen loppua (käytä `use-mileage-prediction`).
 
-### Vaihe 2: Push-tilausten hallinta (tietokanta)
-- Luodaan uusi `push_subscriptions`-taulu tietokantaan:
-  - `id`, `user_id`, `endpoint`, `p256dh`, `auth`, `created_at`
-  - RLS: käyttäjät voivat lisätä/poistaa omia tilauksiaan, adminit näkevät kaikki
-- Tämä tallentaa jokaisen käyttäjän selaimen push-tilauksen tiedot
+Visuaali: pieni rivi per tehtävä (ikoni + lyhyt teksti + nappi), värikoodaus prioriteetin mukaan (warning / destructive). Useamman ajoneuvon tapauksessa näytetään ajoneuvon rekisterinumero rivin yhteydessä.
 
-### Vaihe 3: VAPID-avaimet ja salaisuudet
-- Generoidaan VAPID-avainpari (julkinen + yksityinen) push-ilmoituksia varten
-- Julkinen avain tallennetaan koodiin (turvallista)
-- Yksityinen avain tallennetaan salaisuutena backendiin
-- VAPID-avaimet ovat Web Push -standardin vaatima tunnistautumismenetelmä
+### 3. Aktiviteettiloki / historia (uusi osio sivun alaosaan)
+Käytetään olemassa olevaa `VehicleActivityLog`-komponenttia (jota adminit jo käyttävät). Se näyttää aikajanana:
+- km-merkinnät
+- tehdyt kuukausitarkastukset
 
-### Vaihe 4: Frontend - Push-tilauksen rekisteröinti
-- Luodaan `usePushNotifications`-hook joka:
-  - Tarkistaa tukeeko selain push-ilmoituksia
-  - Pyytää käyttäjältä luvan ilmoituksiin
-  - Rekisteröi push-tilauksen Service Workeriin
-  - Tallentaa tilauksen tietokantaan
-- Lisätään käyttöliittymään toggle "Ilmoitukset päälle/pois" (esim. profiilivalikkoon tai asetuksiin)
+Lisäksi laajennetaan logia näyttämään käyttäjän omat **huoltokäynnit** (`service_visits`-taulu) ja **omat vauriotilmoitukset** (`damage_reports`-taulu) samalla aikajanalla. Useamman ajoneuvon käyttäjille näytetään yksi yhdistetty loki, jokaisessa rivissä rekisterinumero.
 
-### Vaihe 5: Backend - Ilmoitusten lähetys (Edge Function)
-- Luodaan `send-push-notification` Edge Function joka:
-  - Hakee käyttäjien push-tilaukset tietokannasta
-  - Lähettää Web Push -ilmoitukset käyttäen `web-push`-kirjastoa
-  - Tukee eri ilmoitustyyppejä (kilometrimuistutus, tarkastusmuistutus)
-- Service Worker vastaanottaa ilmoituksen ja näyttää sen puhelimessa
+Loki rajataan oletuksena 10 viimeisimpään tapahtumaan + "Näytä lisää" -painike.
 
-### Vaihe 6: Ajastetut ilmoitukset (Cron)
-- Luodaan tietokantaan cron-tehtävä joka kutsuu Edge Functionia:
-  - **Maanantaiaamuna klo 8**: tarkistaa ketkä eivät ole kirjanneet kilometrejä ja lähettää muistutuksen
-  - **Kuukauden 1. arkipäivänä klo 8**: muistutus kuukausitarkastuksesta
-- Cron käyttää `pg_cron` + `pg_net` -laajennuksia
+## Tekniset huomiot
 
-## Tekninen yhteenveto
+- RLS sallii käyttäjän lukea omat km-merkinnät, tarkastukset, huoltokäynnit ja vauriotilmoitukset → ei tarvita uusia policyjä.
+- Päivämäärät `pp/kk/vvvv`-muodossa olemassa olevalla `formatDate`-helperillä.
+- Mobile-first: kortit pinotaan, napit täysleveitä pienillä näytöillä.
+- Ei muutoksia tietokantaan eikä admin-näkymiin.
+
+## Tiedostot joihin kosketaan
 
 ```text
-Käyttäjä avaa sovelluksen
-    |
-    v
-PWA Service Worker rekisteröityy
-    |
-    v
-"Haluatko ilmoituksia?" -> Käyttäjä hyväksyy
-    |
-    v
-Push-tilaus tallennetaan tietokantaan
-    |
-    v
-Cron (ma klo 8) -> Edge Function
-    |
-    v
-Edge Function hakee tilaukset + tarkistaa kirjaukset
-    |
-    v
-Web Push -> Puhelimen lukitusnäyttö: "Muista kirjata kilometrit!"
+src/App.tsx                                  (reititys)
+src/components/AppSidebar.tsx                (linkin näkyvyys)
+src/pages/Dashboard.tsx                      (poista user-haara)
+src/pages/MyVehicle.tsx                      (lisää uudet osiot)
+src/components/vehicles/UserTasksCard.tsx    (UUSI)
+src/components/vehicles/VehicleActivityLog.tsx  (laajennus: huollot + vauriot)
 ```
-
-## Huomioita
-- Push-ilmoitukset toimivat vain jos käyttäjä on asentanut sovelluksen kotinäytölle (tai käyttää Chromea Androidilla)
-- iPhonella push-ilmoitukset vaativat iOS 16.4+ ja sovelluksen asentamisen kotinäytölle
-- Käyttäjän on annettava lupa ilmoituksiin erikseen
-- Toteutukseen tarvitaan VAPID-yksityisavain, joka generoidaan ja tallennetaan salaisuutena
