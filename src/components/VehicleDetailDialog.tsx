@@ -736,7 +736,7 @@ export function VehicleDetailDialog({
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="px-6 py-4 border-t bg-background shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {canEditAll || canEditResponsibleUser ? "Peruuta" : "Sulje"}
           </Button>
