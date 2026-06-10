@@ -179,8 +179,8 @@ export function VehicleDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Car className="h-5 w-5" />
             {vehicle.make} {vehicle.model}
@@ -190,7 +190,7 @@ export function VehicleDetailDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 overflow-y-auto px-6 py-4 flex-1">
           {/* Basic Info Section */}
           {canEditAll ? (
             <div className="space-y-4">
