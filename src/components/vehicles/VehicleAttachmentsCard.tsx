@@ -42,10 +42,9 @@ export function VehicleAttachmentsCard({ vehicleId }: VehicleAttachmentsCardProp
   const canManage = isAdmin || isSuperAdmin;
 
   useEffect(() => {
-    if (canManage) {
-      fetchAttachments();
-    }
-  }, [vehicleId, canManage]);
+    fetchAttachments();
+  }, [vehicleId]);
+
 
   const fetchAttachments = async () => {
     try {
