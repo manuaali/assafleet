@@ -200,32 +200,35 @@ export function VehicleAttachmentsCard({ vehicleId }: VehicleAttachmentsCardProp
             Leasing-sopimukset ja muut dokumentit
           </CardDescription>
         </div>
-        <div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-            onChange={handleFileSelect}
-          />
-          <Button
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-          >
-            {isUploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Ladataan...
-              </>
-            ) : (
-              <>
-                <Upload className="mr-2 h-4 w-4" />
-                Lisää liite
-              </>
-            )}
-          </Button>
-        </div>
+        {canManage && (
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+              onChange={handleFileSelect}
+            />
+            <Button
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Ladataan...
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Lisää liite
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
       </CardHeader>
       <CardContent>
         {isLoading ? (
