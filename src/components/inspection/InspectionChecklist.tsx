@@ -90,14 +90,11 @@ export function InspectionChecklist({
 
       if (uploadError) throw uploadError;
 
-      // Get signed URL instead of public URL
-      const { data: signedData, error: signedError } = await supabase.storage
-        .from("inspection-images")
-        .createSignedUrl(fileName, 3600); // 1 hour expiration
+      // Use a local object URL for the immediate preview; the persisted image
+      // is fetched through the get-signed-url edge function when displayed later.
+      const previewUrl = URL.createObjectURL(file);
 
-      if (signedError) throw signedError;
-
-      // Store both the signed URL for display and the file path for database storage
+      // Store the file path for database storage
       setFilePaths((prev) => ({
         ...prev,
         [key]: [...(prev[key] || []), fileName],
@@ -107,10 +104,11 @@ export function InspectionChecklist({
         ...prev,
         [key]: {
           ...prev[key],
-          imageUrls: [...prev[key].imageUrls, signedData.signedUrl],
+          imageUrls: [...prev[key].imageUrls, previewUrl],
           uploading: false,
         },
       }));
+
 
       toast({
         title: "Kuva ladattu",

@@ -85,7 +85,36 @@ serve(async (req) => {
       }
     }
 
+    // For vehicle-attachments bucket, verify user has access
+    if (bucket === 'vehicle-attachments') {
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: roleData } = await supabaseAdmin
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      const isAdmin = roleData?.role === 'admin' || roleData?.role === 'superadmin';
+
+      if (!isAdmin) {
+        // Non-admins: only if they own the attached vehicle
+        const { data: attachment } = await supabaseAdmin
+          .from('vehicle_attachments')
+          .select('vehicle_id, vehicles!inner(responsible_user_id)')
+          .eq('file_url', path)
+          .maybeSingle();
+
+        const responsibleId = (attachment as any)?.vehicles?.responsible_user_id;
+        if (!attachment || responsibleId !== user.id) {
+          return new Response(
+            JSON.stringify({ error: 'Access denied to this attachment' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+    }
+
     // For damage-images bucket, verify user has access
+
     if (bucket === 'damage-images') {
       // Create service role client to check access
       const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);

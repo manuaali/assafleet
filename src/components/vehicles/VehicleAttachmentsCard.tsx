@@ -42,10 +42,9 @@ export function VehicleAttachmentsCard({ vehicleId }: VehicleAttachmentsCardProp
   const canManage = isAdmin || isSuperAdmin;
 
   useEffect(() => {
-    if (canManage) {
-      fetchAttachments();
-    }
-  }, [vehicleId, canManage]);
+    fetchAttachments();
+  }, [vehicleId]);
+
 
   const fetchAttachments = async () => {
     try {
@@ -90,10 +89,8 @@ export function VehicleAttachmentsCard({ vehicleId }: VehicleAttachmentsCardProp
 
       if (uploadError) throw uploadError;
 
-      // Get the file URL
-      const { data: urlData } = supabase.storage
-        .from("vehicle-attachments")
-        .getPublicUrl(fileName);
+      // Note: bucket is private — signed URLs are generated on demand for downloads.
+
 
       // Save attachment record
       const { error: insertError } = await supabase
@@ -185,9 +182,11 @@ export function VehicleAttachmentsCard({ vehicleId }: VehicleAttachmentsCardProp
     }
   };
 
-  if (!canManage) {
+  // Hide the card entirely from users if there are no attachments
+  if (!canManage && !isLoading && attachments.length === 0) {
     return null;
   }
+
 
   return (
     <Card>
@@ -201,32 +200,35 @@ export function VehicleAttachmentsCard({ vehicleId }: VehicleAttachmentsCardProp
             Leasing-sopimukset ja muut dokumentit
           </CardDescription>
         </div>
-        <div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-            onChange={handleFileSelect}
-          />
-          <Button
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-          >
-            {isUploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Ladataan...
-              </>
-            ) : (
-              <>
-                <Upload className="mr-2 h-4 w-4" />
-                Lisää liite
-              </>
-            )}
-          </Button>
-        </div>
+        {canManage && (
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+              onChange={handleFileSelect}
+            />
+            <Button
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Ladataan...
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Lisää liite
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -262,14 +264,17 @@ export function VehicleAttachmentsCard({ vehicleId }: VehicleAttachmentsCardProp
                   >
                     <Download className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => setDeleteId(attachment.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {canManage && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => setDeleteId(attachment.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+
                 </div>
               </div>
             ))}
