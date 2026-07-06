@@ -90,10 +90,8 @@ export function VehicleAttachmentsCard({ vehicleId }: VehicleAttachmentsCardProp
 
       if (uploadError) throw uploadError;
 
-      // Get the file URL
-      const { data: urlData } = supabase.storage
-        .from("vehicle-attachments")
-        .getPublicUrl(fileName);
+      // Note: bucket is private — signed URLs are generated on demand for downloads.
+
 
       // Save attachment record
       const { error: insertError } = await supabase
