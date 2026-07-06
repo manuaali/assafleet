@@ -182,9 +182,11 @@ export function VehicleAttachmentsCard({ vehicleId }: VehicleAttachmentsCardProp
     }
   };
 
-  if (!canManage) {
+  // Hide the card entirely from users if there are no attachments
+  if (!canManage && !isLoading && attachments.length === 0) {
     return null;
   }
+
 
   return (
     <Card>
