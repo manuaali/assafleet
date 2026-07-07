@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle, CalendarIcon, Upload, X, Loader2, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminDamageReportsList } from "@/components/damage/AdminDamageReportsList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const damageReportSchema = z.object({
   damageDate: z.date({ required_error: "Vahinkopäivä vaaditaan" }),
@@ -199,63 +200,40 @@ export default function DamageReport() {
     setSubmitted(false);
   };
 
-  // Admin view
-  if (isAdmin) {
-    return (
-      <DashboardLayout>
-        <AdminDamageReportsList />
-      </DashboardLayout>
-    );
-  }
+  const noVehicleCard = (
+    <Card>
+      <CardContent className="flex flex-col items-center justify-center py-12">
+        <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
+        <h2 className="text-lg font-semibold mb-2">Ei ajoneuvoa</h2>
+        <p className="text-muted-foreground text-center">
+          Sinulle ei ole määritetty ajoneuvoa. Vahinkoilmoituksen tekeminen vaatii ajoneuvon.
+        </p>
+      </CardContent>
+    </Card>
+  );
 
-  // User has no vehicles
-  if (userVehicles.length === 0) {
-    return (
-      <DashboardLayout>
-        <div className="animate-fade-in">
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <AlertTriangle className="h-12 w-12 text-muted-foreground mb-4" />
-              <h2 className="text-lg font-semibold mb-2">Ei ajoneuvoa</h2>
-              <p className="text-muted-foreground text-center">
-                Sinulle ei ole määritetty ajoneuvoa. Vahinkoilmoituksen tekeminen vaatii ajoneuvon.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const successCard = (
+    <Card>
+      <CardContent className="flex flex-col items-center justify-center py-12">
+        <CheckCircle className="h-16 w-16 text-success mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Vahinkoilmoitus lähetetty!</h2>
+        <p className="text-muted-foreground text-center mb-6">
+          Ilmoituksesi on vastaanotettu. Ylläpitäjät käsittelevät sen mahdollisimman pian.
+        </p>
+        <Button onClick={resetForm}>Tee uusi ilmoitus</Button>
+      </CardContent>
+    </Card>
+  );
 
-  // Success view
-  if (submitted) {
-    return (
-      <DashboardLayout>
-        <div className="animate-fade-in max-w-2xl mx-auto">
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <CheckCircle className="h-16 w-16 text-success mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Vahinkoilmoitus lähetetty!</h2>
-              <p className="text-muted-foreground text-center mb-6">
-                Ilmoituksesi on vastaanotettu. Ylläpitäjät käsittelevät sen mahdollisimman pian.
-              </p>
-              <Button onClick={resetForm}>Tee uusi ilmoitus</Button>
-            </CardContent>
-          </Card>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const reportForm = (
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">Vahinkoilmoitus</h1>
+        <p className="text-muted-foreground">
+          Täytä alla olevat tiedot mahdollisimman tarkasti.
+        </p>
+      </div>
 
-  return (
-    <DashboardLayout>
-      <div className="animate-fade-in max-w-2xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight">Vahinkoilmoitus</h1>
-          <p className="text-muted-foreground">
-            Täytä alla olevat tiedot mahdollisimman tarkasti.
-          </p>
-        </div>
 
         <Card>
           <CardHeader>
@@ -530,6 +508,35 @@ export default function DamageReport() {
           </CardContent>
         </Card>
       </div>
+  );
+
+  if (isAdmin) {
+    return (
+      <DashboardLayout>
+        <div className="animate-fade-in">
+          <Tabs defaultValue="list" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="list">Vahinkoilmoitukset</TabsTrigger>
+              <TabsTrigger value="new">Tee ilmoitus</TabsTrigger>
+            </TabsList>
+            <TabsContent value="list">
+              <AdminDamageReportsList />
+            </TabsContent>
+            <TabsContent value="new">
+              {userVehicles.length === 0 ? noVehicleCard : submitted ? successCard : reportForm}
+            </TabsContent>
+          </Tabs>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      <div className="animate-fade-in">
+        {userVehicles.length === 0 ? noVehicleCard : submitted ? successCard : reportForm}
+      </div>
     </DashboardLayout>
   );
 }
+
