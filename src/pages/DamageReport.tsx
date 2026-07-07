@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle, CalendarIcon, Upload, X, Loader2, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminDamageReportsList } from "@/components/damage/AdminDamageReportsList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const damageReportSchema = z.object({
   damageDate: z.date({ required_error: "Vahinkopäivä vaaditaan" }),
