@@ -226,17 +226,14 @@ export default function DamageReport() {
   );
 
   const reportForm = (
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">Vahinkoilmoitus</h1>
+        <p className="text-muted-foreground">
+          Täytä alla olevat tiedot mahdollisimman tarkasti.
+        </p>
+      </div>
 
-
-  return (
-    <DashboardLayout>
-      <div className="animate-fade-in max-w-2xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight">Vahinkoilmoitus</h1>
-          <p className="text-muted-foreground">
-            Täytä alla olevat tiedot mahdollisimman tarkasti.
-          </p>
-        </div>
 
         <Card>
           <CardHeader>
