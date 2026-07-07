@@ -508,6 +508,35 @@ export default function DamageReport() {
           </CardContent>
         </Card>
       </div>
+  );
+
+  if (isAdmin) {
+    return (
+      <DashboardLayout>
+        <div className="animate-fade-in">
+          <Tabs defaultValue="list" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="list">Vahinkoilmoitukset</TabsTrigger>
+              <TabsTrigger value="new">Tee ilmoitus</TabsTrigger>
+            </TabsList>
+            <TabsContent value="list">
+              <AdminDamageReportsList />
+            </TabsContent>
+            <TabsContent value="new">
+              {userVehicles.length === 0 ? noVehicleCard : submitted ? successCard : reportForm}
+            </TabsContent>
+          </Tabs>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      <div className="animate-fade-in">
+        {userVehicles.length === 0 ? noVehicleCard : submitted ? successCard : reportForm}
+      </div>
     </DashboardLayout>
   );
 }
+
