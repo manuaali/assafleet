@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { fi } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +39,7 @@ export function DamageReportDetailDialog({
   onStatusChange,
 }: DamageReportDetailDialogProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [status, setStatus] = useState(report?.status || "pending");
   const [adminNotes, setAdminNotes] = useState(report?.admin_notes || "");
   const [saving, setSaving] = useState(false);
@@ -103,6 +105,13 @@ export function DamageReportDetailDialog({
         .eq("id", report.id);
 
       if (error) throw error;
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["vehicle-activity-log", report.vehicle_id] }),
+        queryClient.invalidateQueries({ queryKey: ["vehicle-damage-reports", report.vehicle_id] }),
+        queryClient.invalidateQueries({ queryKey: ["damage-reports"] }),
+        queryClient.invalidateQueries({ queryKey: ["pending-damage-reports"] }),
+      ]);
 
       toast({
         title: "Tallennettu",

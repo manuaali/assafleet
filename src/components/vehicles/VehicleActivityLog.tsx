@@ -5,6 +5,7 @@ import { Gauge, ClipboardCheck, History, Wrench, AlertTriangle } from "lucide-re
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getDamageReportActivity } from "@/lib/damage-report-activity";
 
 type EntryType = "mileage" | "inspection" | "service" | "damage";
 
@@ -14,6 +15,8 @@ interface ActivityLogEntry {
   date: string;
   description: string;
   userName: string;
+  damageStatus?: string;
+  damageDate?: string;
 }
 
 interface VehicleActivityLogProps {
@@ -54,9 +57,9 @@ export function VehicleActivityLog({ vehicleId, variant = "card" }: VehicleActiv
           .limit(50),
         supabase
           .from("damage_reports")
-          .select("id, user_id, damage_location, damage_date, status, created_at")
+          .select("id, user_id, reporter_name, damage_location, damage_date, status, created_at, updated_at")
           .eq("vehicle_id", vehicleId)
-          .order("damage_date", { ascending: false })
+          .order("updated_at", { ascending: false })
           .limit(50),
       ]);
 
@@ -128,14 +131,15 @@ export function VehicleActivityLog({ vehicleId, variant = "card" }: VehicleActiv
       }
 
       for (const d of damageData) {
-        const statusLabel =
-          d.status === "reviewed" ? "Käsitelty" : d.status === "closed" ? "Suljettu" : "Käsittelemätön";
+        const activity = getDamageReportActivity(d);
         entries.push({
           id: `d-${d.id}`,
           type: "damage",
-          date: d.damage_date || d.created_at,
-          description: `${d.damage_location || "Vahinko"} — ${statusLabel}`,
-          userName: getUserName(d.user_id),
+          date: activity.date,
+          description: d.damage_location || "Vahinko",
+          damageStatus: activity.status,
+          damageDate: d.damage_date,
+          userName: d.reporter_name || getUserName(d.user_id),
         });
       }
 
@@ -169,12 +173,23 @@ export function VehicleActivityLog({ vehicleId, variant = "card" }: VehicleActiv
                     <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                       {meta.label}
                     </Badge>
+                    {entry.damageStatus && (
+                      <Badge variant={entry.damageStatus === "pending" ? "warning" : entry.damageStatus === "reviewed" ? "success" : "secondary"} className="text-[10px] px-1.5 py-0">
+                        {entry.damageStatus === "pending" ? "Käsittelemätön" : entry.damageStatus === "reviewed" ? "Käsitelty" : entry.damageStatus === "closed" ? "Suljettu" : "Tuntematon tila"}
+                      </Badge>
+                    )}
                     <span className="text-xs text-muted-foreground">
-                      {format(new Date(entry.date), "dd.MM.yyyy 'klo' HH:mm", { locale: fi })}
+                      {entry.type === "damage" && "Päivitetty: "}
+                      {format(new Date(entry.date), "dd/MM/yyyy HH:mm", { locale: fi })}
                     </span>
                   </div>
                   <p className="text-sm font-medium mt-0.5 break-words">{entry.description}</p>
-                  <p className="text-xs text-muted-foreground">{entry.userName}</p>
+                  {entry.damageDate && (
+                    <p className="text-xs text-muted-foreground">
+                      Vahinko tapahtunut: {format(new Date(entry.damageDate), "dd/MM/yyyy HH:mm", { locale: fi })}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">{entry.type === "damage" && "Ilmoittaja: "}{entry.userName}</p>
                 </div>
               </div>
             );
